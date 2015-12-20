@@ -1,4 +1,4 @@
-# EPi.Libraries.Commerce.ExchangeRates
+﻿# EPi.Libraries.Commerce.ExchangeRates
 
 [![Build status](https://ci.appveyor.com/api/projects/status/d5ruha0q93g536ud/branch/master?svg=true)](https://ci.appveyor.com/project/jstemerdink/epi-libraries-commerce-exchangerates/branch/master)
 [![GitHub version](https://badge.fury.io/gh/jstemerdink%2FEPi.Libraries.Commerce.ExchangeRates.svg)](http://badge.fury.io/gh/jstemerdink%2FEPi.Libraries.Commerce.ExchangeRates)
@@ -9,15 +9,10 @@
 By Jeroen Stemerdink
 
 ## About
-This will a scheduled job to your commerce project, which updates the exchange rates.
+This will Fixer.io as an exchange rate service that will be consumed by the exchange rate scheduled job.
 
 ## Requirements
 
 * EPiServer Commerce >= 9.2.1
 * .Net 4.5
-
-## Parts
-
-[Scheduled job](EPi.Libraries.Commerce.ExchangeRates/README.md)
-
-[Fixer exchange rate provider](EPi.Libraries.Commerce.ExchangeRates.Fixer/README.md)
+* EPi.Libraries.Commerce.ExchangeRates
