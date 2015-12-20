@@ -91,17 +91,21 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             //Add implementation
             this.conversionRatesToUsd = this.ExchangeRateService.Service.GetExchangeRates();
 
-            this.CreateConversions();
-
+            List<string> messages = this.CreateConversions();
+            string returnMessage;
+             
             //For long running jobs periodically check if stop is signaled and if so stop execution
-            return this.stopSignaled ? "Stop of job was called" : "Change to message that describes outcome of execution";
+            returnMessage = messages.Any() ? string.Join("<br/>", messages) : "Exchange rates updated";
+            return this.stopSignaled ? "Stop of job was called" : returnMessage;
         }
 
         /// <summary>
         ///     Creates the conversions.
         /// </summary>
-        private void CreateConversions()
+        private List<string> CreateConversions()
         {
+            List<string> messages = new List<string>();
+
             this.EnsureCurrencies();
 
             CurrencyDto dto = CurrencyManager.GetCurrencyDto();
@@ -109,10 +113,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             foreach (CurrencyConversion conversion in this.conversionRatesToUsd)
             {
                 List<CurrencyConversion> toCurrencies = this.conversionRatesToUsd.Where(c => c != conversion).ToList();
-                this.AddRates(dto, conversion, toCurrencies);
+                messages = this.AddRates(dto, conversion, toCurrencies);
             }
 
             CurrencyManager.SaveCurrency(dto);
+
+            return messages;
         }
 
         /// <summary>
@@ -137,6 +143,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     conversion.Name,
                     DateTime.Now,
                     AppContext.Current.ApplicationId);
+
                 isDirty = true;
             }
 
@@ -152,8 +159,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <param name="dto">The dto.</param>
         /// <param name="from">From.</param>
         /// <param name="toCurrencies">To currencies.</param>
-        private void AddRates(CurrencyDto dto, CurrencyConversion from, IEnumerable<CurrencyConversion> toCurrencies)
+        private List<string> AddRates(CurrencyDto dto, CurrencyConversion from, IEnumerable<CurrencyConversion> toCurrencies)
         {
+            List<string> messages = new List<string>();
             CurrencyDto.CurrencyRateDataTable rates = dto.CurrencyRate;
 
             foreach (CurrencyConversion to in toCurrencies)
@@ -161,17 +169,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                 double rate = (double)(@from.Factor / to.Factor);
                 CurrencyDto.CurrencyRow fromRow = GetCurrency(dto, @from.Currency);
                 CurrencyDto.CurrencyRow toRow = GetCurrency(dto, to.Currency);
-                //rates.AddCurrencyRateRow(rate, rate, DateTime.Now, fromRow, toRow, DateTime.Now);
 
                 try
                 {
-                    rates.LoadDataRow(new object[] { rate, rate, DateTime.Now, fromRow, toRow, DateTime.Now }, true);
+                    rates.LoadDataRow(new object[] { rate, rate, to.CurrencyRateDate, fromRow, toRow, to.CurrencyRateDate }, true);
+                    this.log.Information("[Exchange Rates : Job] Exchange rate updated for {0} : {1} ", to.Name, to.Factor);
                 }
                 catch (Exception exception)
                 {
-                    this.log.Error("[Exchange Rates : Job] Error setting exchange rates row", exception);
+                    messages.Add(string.Format(CultureInfo.InvariantCulture, "Error setting exchange rates row: {0}", to.Name));
+                    this.log.Error("[Exchange Rates : Job] Error setting exchange rates row: {0}", to.Name, exception);
                 }
             }
+
+            return messages;
         }
 
         /// <summary>
