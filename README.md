@@ -21,3 +21,5 @@ This will a scheduled job to your commerce project, which updates the exchange r
 [Scheduled job](EPi.Libraries.Commerce.ExchangeRates/README.md)
 
 [Fixer exchange rate provider](EPi.Libraries.Commerce.ExchangeRates.Fixer/README.md)
+
+[Currency layer exchange rate provider](EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer/README.md)

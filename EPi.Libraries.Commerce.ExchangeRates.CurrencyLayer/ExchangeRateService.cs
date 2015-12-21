@@ -70,10 +70,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUrl);
-                //request.ContentType = "application/json; charset=utf-8";
                 request.Method = WebRequestMethods.Http.Get;
-                //request.Accept = "application/json";
-
                 
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 

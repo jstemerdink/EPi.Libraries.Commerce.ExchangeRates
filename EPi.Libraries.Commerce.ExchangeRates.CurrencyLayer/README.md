@@ -9,7 +9,9 @@
 By Jeroen Stemerdink
 
 ## About
-This will Fixer.io as an exchange rate service that will be consumed by the exchange rate scheduled job.
+This will add currencylayer.com as an exchange rate service that will be consumed by the exchange rate scheduled job.
+This service has a free plan of a 1000 requests month.
+
 
 ## Requirements
 

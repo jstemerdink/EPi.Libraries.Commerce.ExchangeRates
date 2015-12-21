@@ -189,6 +189,11 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     }
                     else
                     {
+                        if (fromRow.CurrencyId == toRow.CurrencyId)
+                        {
+                            continue;
+                        }
+
                         rates.AddCurrencyRateRow(rate, rate, DateTime.Now, fromRow, toRow, to.CurrencyRateDate);
                     }
 
