@@ -27,6 +27,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Globalization;
 using System.Linq;
+using System.Web.Configuration;
 
 using EPiServer.Logging;
 using EPiServer.PlugIn;
@@ -106,6 +107,11 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         {
             List<string> messages = new List<string>();
 
+            if (!this.conversionRatesToUsd.Any())
+            {
+                messages.Add("Error retrieving exchange rates from service");
+            }
+
             this.EnsureCurrencies();
 
             CurrencyDto dto = CurrencyManager.GetCurrencyDto();
@@ -172,13 +178,26 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
                 try
                 {
-                    rates.LoadDataRow(new object[] { rate, rate, to.CurrencyRateDate, fromRow, toRow, to.CurrencyRateDate }, true);
+                    CurrencyDto.CurrencyRateRow existingRow = rates.Rows.Cast<CurrencyDto.CurrencyRateRow>().FirstOrDefault(row => row.FromCurrencyId == fromRow.CurrencyId && row.ToCurrencyId == toRow.CurrencyId);
+
+                    if (existingRow != null)
+                    {
+                        existingRow.AverageRate = rate;
+                        existingRow.EndOfDayRate = rate;
+                        existingRow.CurrencyRateDate = to.CurrencyRateDate;
+                        existingRow.ModifiedDate = DateTime.Now;
+                    }
+                    else
+                    {
+                        rates.AddCurrencyRateRow(rate, rate, DateTime.Now, fromRow, toRow, to.CurrencyRateDate);
+                    }
+
                     this.log.Information("[Exchange Rates : Job] Exchange rate updated for {0} : {1} ", to.Name, to.Factor);
                 }
                 catch (Exception exception)
                 {
                     messages.Add(string.Format(CultureInfo.InvariantCulture, "Error setting exchange rates row: {0}", to.Name));
-                    this.log.Error("[Exchange Rates : Job] Error setting exchange rates row: {0}", to.Name, exception);
+                    this.log.Error("[Exchange Rates : Job] Error setting exchange rates row for: {0}", to.Name, exception);
                 }
             }
 

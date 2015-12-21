@@ -84,17 +84,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                     new CurrencyConversion(
                         fixerResponse.BaseCurrency,
                         this.GetCurrencyName(fixerResponse.BaseCurrency),
-                        1m));
-
+                        1m, DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture)));
+                
                 foreach (PropertyInfo propertyInfo in typeof(Rates).GetProperties())
                 {
+                    string currencyName = this.GetCurrencyName(propertyInfo.Name);
+                    float exchangeRate =
+                        (float)fixerResponse.ExchangeRates.GetType()
+                            .GetProperty(propertyInfo.Name)
+                            .GetValue(fixerResponse.ExchangeRates, null);
+
                     CurrencyConversion currencyConversion = new CurrencyConversion(
                         propertyInfo.Name,
-                        this.GetCurrencyName(propertyInfo.Name),
-                        Convert.ToDecimal(
-                            fixerResponse.ExchangeRates.GetType()
-                                .GetProperty(propertyInfo.Name)
-                                .GetValue(fixerResponse.ExchangeRates, null), CultureInfo.CreateSpecificCulture("en-US")));
+                        currencyName,
+                        Convert.ToDecimal(exchangeRate, CultureInfo.CreateSpecificCulture("en-US")), DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture));
 
                     currencyConversions.Add(currencyConversion);
                 }
@@ -118,7 +121,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                 this.regionsInfos.FirstOrDefault(
                     r => r.ISOCurrencySymbol.Equals(isoCurrencySymbol, StringComparison.OrdinalIgnoreCase));
 
-            return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyNativeName;
+            return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyEnglishName;
         }
 
         /// <summary>
@@ -132,7 +135,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 
             try
             {
-                cultures = CultureInfo.GetCultures(CultureTypes.AllCultures & ~CultureTypes.NeutralCultures);
+                cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
             }
             catch (ArgumentOutOfRangeException argumentOutOfRangeException)
             {
@@ -147,12 +150,15 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                 //to the RegionInfo constructor to gain access to the information for that culture
                 try
                 {
-                    RegionInfo region = new RegionInfo(culture.LCID);
-                    regions.Add(region);
+                    if (!culture.IsNeutralCulture)
+                    {
+                        RegionInfo region = new RegionInfo(culture.LCID);
+                        regions.Add(region);
+                    }
                 }
                 catch (ArgumentException argumentException)
                 {
-                    this.log.Error("[Exchange Rates : Fixer] Error add region info", argumentException);
+                    this.log.Error("[Exchange Rates : Fixer] Error adding region info for: {0}", culture.EnglishName, argumentException);
                 }
             }
 

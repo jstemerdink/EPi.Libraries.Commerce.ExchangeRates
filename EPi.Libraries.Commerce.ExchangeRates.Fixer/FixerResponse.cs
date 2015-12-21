@@ -34,7 +34,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         ///     Gets or sets the base currency.
         /// </summary>
         /// <value>The base currency.</value>
-        [JsonProperty(PropertyName = "_base")]
+        [JsonProperty(PropertyName = "base")]
         public string BaseCurrency { get; set; }
 
         /// <summary>
