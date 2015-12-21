@@ -104,7 +104,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         ///     Gets or sets the idr.
         /// </summary>
         /// <value>The idr.</value>
-        public int IDR { get; set; }
+        public float IDR { get; set; }
 
         /// <summary>
         ///     Gets or sets the ils.
