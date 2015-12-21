@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer", "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.csproj", "{87FE793A-550E-4E48-888C-902EC94E8AB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{2D975180-7665-4E2B-B633-9A4BE31144DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D975180-7665-4E2B-B633-9A4BE31144DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D975180-7665-4E2B-B633-9A4BE31144DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87FE793A-550E-4E48-888C-902EC94E8AB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87FE793A-550E-4E48-888C-902EC94E8AB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87FE793A-550E-4E48-888C-902EC94E8AB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87FE793A-550E-4E48-888C-902EC94E8AB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

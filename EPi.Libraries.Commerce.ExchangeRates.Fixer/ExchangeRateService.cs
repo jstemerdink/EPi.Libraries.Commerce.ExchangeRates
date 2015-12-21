@@ -38,30 +38,19 @@ using Newtonsoft.Json;
 namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 {
     /// <summary>
-    ///     Class FixerExchangeRateService.
+    ///     Class ExchangeRateService.
     /// </summary>
     [ServiceConfiguration(typeof(IExchangeRateService), Lifecycle = ServiceInstanceScope.Singleton)]
-    public class FixerExchangeRateService : IExchangeRateService
+    public class ExchangeRateService : ExchangeRateServiceBase
     {
-        private readonly ILogger log = LogManager.GetLogger();
-
-        private readonly List<RegionInfo> regionsInfos;
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
-        /// </summary>
-        public FixerExchangeRateService()
-        {
-            this.regionsInfos = this.GetRegions();
-        }
-
         /// <summary>
         ///     Gets the exchange rates.
         /// </summary>
         /// <returns>List&lt;Models.CurrencyConversion&gt;.</returns>
-        public ReadOnlyCollection<CurrencyConversion> GetExchangeRates()
+        public override ReadOnlyCollection<CurrencyConversion> GetExchangeRates()
         {
             List<CurrencyConversion> currencyConversions = new List<CurrencyConversion>();
+            string jsonResponse = string.Empty;
 
             try
             {
@@ -70,99 +59,48 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                 request.Method = WebRequestMethods.Http.Get;
                 request.Accept = "application/json";
 
-                string text;
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
                 using (StreamReader streamReader = new StreamReader(response.GetResponseStream()))
                 {
-                    text = streamReader.ReadToEnd();
+                    jsonResponse = streamReader.ReadToEnd();
                 }
 
-                FixerResponse fixerResponse = JsonConvert.DeserializeObject<FixerResponse>(text);
+                FixerResponse fixerResponse = JsonConvert.DeserializeObject<FixerResponse>(jsonResponse);
 
                 currencyConversions.Add(
                     new CurrencyConversion(
                         fixerResponse.BaseCurrency,
                         this.GetCurrencyName(fixerResponse.BaseCurrency),
-                        1m, DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture)));
-                
+                        1m,
+                        DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture)));
+
                 foreach (PropertyInfo propertyInfo in typeof(Rates).GetProperties())
                 {
                     string currencyName = this.GetCurrencyName(propertyInfo.Name);
                     float exchangeRate =
-                        (float)fixerResponse.ExchangeRates.GetType()
+                        (float)
+                        fixerResponse.ExchangeRates.GetType()
                             .GetProperty(propertyInfo.Name)
                             .GetValue(fixerResponse.ExchangeRates, null);
 
                     CurrencyConversion currencyConversion = new CurrencyConversion(
                         propertyInfo.Name,
                         currencyName,
-                        Convert.ToDecimal(exchangeRate, CultureInfo.CreateSpecificCulture("en-US")), DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture));
+                        Convert.ToDecimal(exchangeRate, CultureInfo.CreateSpecificCulture("en-US")),
+                        DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture));
 
                     currencyConversions.Add(currencyConversion);
                 }
             }
             catch (Exception exception)
             {
-                this.log.Error("[Exchange Rates : Fixer] Error retrieving exchange rates from fixer.io", exception);
+                this.Log.Error("[Exchange Rates : Fixer] Error retrieving exchange rates from fixer.io", exception);
+                this.Log.Information("[Exchange Rates : CurrencyLayer] JSON response: {0}", jsonResponse);
             }
 
             return new ReadOnlyCollection<CurrencyConversion>(currencyConversions);
         }
 
-        /// <summary>
-        ///     Gets the name of the currency.
-        /// </summary>
-        /// <param name="isoCurrencySymbol">The ISO currency symbol.</param>
-        /// <returns>System.String.</returns>
-        private string GetCurrencyName(string isoCurrencySymbol)
-        {
-            RegionInfo currencyRegion =
-                this.regionsInfos.FirstOrDefault(
-                    r => r.ISOCurrencySymbol.Equals(isoCurrencySymbol, StringComparison.OrdinalIgnoreCase));
-
-            return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyEnglishName;
-        }
-
-        /// <summary>
-        ///     Gets the regions.
-        /// </summary>
-        /// <returns>List&lt;RegionInfo&gt;.</returns>
-        private List<RegionInfo> GetRegions()
-        {
-            List<RegionInfo> regions = new List<RegionInfo>();
-            CultureInfo[] cultures;
-
-            try
-            {
-                cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
-            }
-            catch (ArgumentOutOfRangeException argumentOutOfRangeException)
-            {
-                this.log.Error("[Exchange Rates : Fixer] Error getting culture info", argumentOutOfRangeException);
-                return regions;
-            }
-
-            //loop through all the cultures found
-            foreach (CultureInfo culture in cultures)
-            {
-                //pass the current culture's Locale ID (http://msdn.microsoft.com/en-us/library/0h88fahh.aspx)
-                //to the RegionInfo constructor to gain access to the information for that culture
-                try
-                {
-                    if (!culture.IsNeutralCulture)
-                    {
-                        RegionInfo region = new RegionInfo(culture.LCID);
-                        regions.Add(region);
-                    }
-                }
-                catch (ArgumentException argumentException)
-                {
-                    this.log.Error("[Exchange Rates : Fixer] Error adding region info for: {0}", culture.EnglishName, argumentException);
-                }
-            }
-
-            return regions;
-        }
     }
 }

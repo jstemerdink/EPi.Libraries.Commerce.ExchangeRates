@@ -12,12 +12,9 @@
     <description>$description$</description>
     <releaseNotes></releaseNotes>
     <copyright>Copyright © Jeroen Stemerdink 2015</copyright>
-    <tags>commerce exchange currency scheduled job</tags>
+    <tags>commerce exchange currency scheduled job currency layer</tags>
     <dependencies>
-      <dependency id="EPiServer.Commerce" version="9.2.1" />
+      <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="0.1.0" />
     </dependencies>
   </metadata>
-  <files>
-    <file src="readme.txt" target="" />
-  </files>
 </package>

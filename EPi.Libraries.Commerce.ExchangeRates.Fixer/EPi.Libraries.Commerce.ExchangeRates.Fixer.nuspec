@@ -6,7 +6,7 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <projectUrl>https://github.com/jstemerdink/EPi.Libraries.Commerce.CurrencyConversion</projectUrl>
+    <projectUrl>https://github.com/jstemerdink/EPi.Libraries.Commerce.ExchangeRates</projectUrl>
     <iconUrl>http://jstemerdink.net/images/js-nuget.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
