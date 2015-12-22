@@ -23,21 +23,21 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <summary>
         /// The regions infos
         /// </summary>
-        protected ReadOnlyCollection<RegionInfo> RegionsInfos;
+        private ReadOnlyCollection<RegionInfo> RegionsInfo { get; }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
         /// </summary>
         protected ExchangeRateServiceBase()
         {
-            this.RegionsInfos = this.GetRegions();
+            this.RegionsInfo = this.GetRegions();
         }
 
         /// <summary>
         /// Gets the exchange rates.
         /// </summary>
         /// <returns>ReadOnlyCollection&lt;CurrencyConversion&gt;.</returns>
-        public abstract ReadOnlyCollection<CurrencyConversion> GetExchangeRates();
+        public abstract ReadOnlyCollection<CurrencyConversion> GetExchangeRates(out List<string> messages);
 
         /// <summary>
         ///     Gets the name of the currency.
@@ -47,7 +47,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         protected string GetCurrencyName(string isoCurrencySymbol)
         {
             RegionInfo currencyRegion =
-                this.RegionsInfos.FirstOrDefault(
+                this.RegionsInfo.FirstOrDefault(
                     r => r.ISOCurrencySymbol.Equals(isoCurrencySymbol, StringComparison.OrdinalIgnoreCase));
 
             return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyEnglishName;
@@ -57,7 +57,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         ///     Gets the regions.
         /// </summary>
         /// <returns>List&lt;RegionInfo&gt;.</returns>
-        protected ReadOnlyCollection<RegionInfo> GetRegions()
+        private ReadOnlyCollection<RegionInfo> GetRegions()
         {
             List<RegionInfo> regions = new List<RegionInfo>();
             CultureInfo[] cultures;
@@ -79,11 +79,13 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                 //to the RegionInfo constructor to gain access to the information for that culture
                 try
                 {
-                    if (!culture.IsNeutralCulture)
+                    if (culture.IsNeutralCulture)
                     {
-                        RegionInfo region = new RegionInfo(culture.LCID);
-                        regions.Add(region);
+                        continue;
                     }
+
+                    RegionInfo region = new RegionInfo(culture.LCID);
+                    regions.Add(region);
                 }
                 catch (ArgumentException argumentException)
                 {

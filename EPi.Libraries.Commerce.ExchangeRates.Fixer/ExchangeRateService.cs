@@ -47,8 +47,10 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         ///     Gets the exchange rates.
         /// </summary>
         /// <returns>List&lt;Models.CurrencyConversion&gt;.</returns>
-        public override ReadOnlyCollection<CurrencyConversion> GetExchangeRates()
+        public override ReadOnlyCollection<CurrencyConversion> GetExchangeRates(out List<string> messages)
         {
+            messages = new List<string>();
+
             List<CurrencyConversion> currencyConversions = new List<CurrencyConversion>();
             string jsonResponse = string.Empty;
 
@@ -95,7 +97,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             }
             catch (Exception exception)
             {
-                this.Log.Error("[Exchange Rates : Fixer] Error retrieving exchange rates from fixer.io", exception);
+                string failMessage = "[Exchange Rates : Fixer] Error retrieving exchange rates from fixer.io";
+                messages.Add(failMessage);
+                this.Log.Error(failMessage, exception);
                 this.Log.Information("[Exchange Rates : CurrencyLayer] JSON response: {0}", jsonResponse);
             }
 

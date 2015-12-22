@@ -35,6 +35,6 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         ///     Gets the exchange rates.
         /// </summary>
         /// <returns>ReadOnlyCollection&lt;CurrencyConversion&gt;.</returns>
-        ReadOnlyCollection<CurrencyConversion> GetExchangeRates();
+        ReadOnlyCollection<CurrencyConversion> GetExchangeRates(out List<string> messages);
     }
 }

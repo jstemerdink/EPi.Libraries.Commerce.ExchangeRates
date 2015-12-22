@@ -89,14 +89,17 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             //Call OnStatusChanged to periodically notify progress of job for manually started jobs
             this.OnStatusChanged(string.Format(CultureInfo.InvariantCulture, "Starting execution of {0}", this.GetType()));
 
-            //Add implementation
-            this.conversionRatesToUsd = this.ExchangeRateService.Service.GetExchangeRates();
+            List<string> messages;
 
-            List<string> messages = this.CreateConversions();
-            string returnMessage;
-             
+            this.conversionRatesToUsd = this.ExchangeRateService.Service.GetExchangeRates(out messages);
+
+            if (!messages.Any())
+            {
+                messages = this.CreateConversions();
+            }
+
             //For long running jobs periodically check if stop is signaled and if so stop execution
-            returnMessage = messages.Any() ? string.Join("<br/>", messages) : "Exchange rates updated";
+            string returnMessage = messages.Any() ? string.Join("<br/>", messages) : "Exchange rates updated";
             return this.stopSignaled ? "Stop of job was called" : returnMessage;
         }
 

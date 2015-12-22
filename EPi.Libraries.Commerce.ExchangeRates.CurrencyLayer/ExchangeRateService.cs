@@ -48,8 +48,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
         ///     Gets the exchange rates.
         /// </summary>
         /// <returns>List&lt;Models.CurrencyConversion&gt;.</returns>
-        public override ReadOnlyCollection<CurrencyConversion> GetExchangeRates()
+        public override ReadOnlyCollection<CurrencyConversion> GetExchangeRates(out List<string> messages)
         {
+            messages = new List<string>();
             List<CurrencyConversion> currencyConversions = new List<CurrencyConversion>();
             string jsonResponse = string.Empty;
 
@@ -59,7 +60,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 
                 if (string.IsNullOrWhiteSpace(accessKey))
                 {
-                    this.Log.Information("[Exchange Rates : CurrencyLayer] Access key not configured");
+                    string keyMissingMessage = "[Exchange Rates : CurrencyLayer] Access key not configured";
+                    messages.Add(keyMissingMessage);
+                    this.Log.Information(keyMissingMessage);
                     return new ReadOnlyCollection<CurrencyConversion>(currencyConversions);
                 }
 
@@ -83,7 +86,13 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 
                 if (!currencyLayerResponse.Success)
                 {
-                    this.Log.Information("[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer on url: {0}: '{1}'", requestUrl, currencyLayerResponse.Error.Info);
+                    string failMessage = string.Format(
+                        CultureInfo.InvariantCulture,
+                        "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer: '{0}'", currencyLayerResponse.Error.Info);
+
+                    messages.Add(failMessage);
+                    this.Log.Information(failMessage);
+                    return new ReadOnlyCollection<CurrencyConversion>(currencyConversions);
                 }
                 
                 DateTime exchangeRateDate = UnixTimeStampToDateTime(currencyLayerResponse.Timestamp);
@@ -112,7 +121,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             }
             catch (Exception exception)
             {
-                this.Log.Error("[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer", exception);
+                string failMessage = "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer";
+                messages.Add(failMessage);
+                this.Log.Error(failMessage, exception);
                 this.Log.Information("[Exchange Rates : CurrencyLayer] JSON response: {0}", jsonResponse);
             }
 
