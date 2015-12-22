@@ -17,4 +17,8 @@
       <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="0.1.0" />
     </dependencies>
   </metadata>
+  <files>
+    <file src="web.config.install.xdt" target="content" />
+    <file src="readme.txt" target="" />
+  </files>
 </package>
