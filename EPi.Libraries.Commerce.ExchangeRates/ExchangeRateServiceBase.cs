@@ -23,7 +23,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <summary>
         /// The regions infos
         /// </summary>
-        private ReadOnlyCollection<RegionInfo> RegionsInfo { get; }
+        private ReadOnlyCollection<RegionInfo> RegionsInfo { get; set; }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
