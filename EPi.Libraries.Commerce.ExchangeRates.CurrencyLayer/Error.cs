@@ -23,32 +23,32 @@
 
 using Newtonsoft.Json;
 
-namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
+namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 {
     /// <summary>
-    ///     Class FixerResponse.
+    ///     Class Error.
     /// </summary>
-    public class FixerResponse
+    public class Error
     {
         /// <summary>
-        ///     Gets or sets the base currency.
+        ///     Gets or sets the code.
         /// </summary>
-        /// <value>The base currency.</value>
-        [JsonProperty(PropertyName = "base")]
-        public string BaseCurrency { get; set; }
+        /// <value>The code.</value>
+        [JsonProperty(PropertyName = "code")]
+        public int Code { get; set; }
 
         /// <summary>
-        ///     Gets or sets the import date.
+        ///     Gets or sets the type.
         /// </summary>
-        /// <value>The import date.</value>
-        [JsonProperty(PropertyName = "date")]
-        public string ImportDate { get; set; }
+        /// <value>The type.</value>
+        [JsonProperty(PropertyName = "type")]
+        public string Type { get; set; }
 
         /// <summary>
-        ///     Gets or sets the exchange rates.
+        ///     Gets or sets the information.
         /// </summary>
-        /// <value>The exchange rates.</value>
-        [JsonProperty(PropertyName = "rates")]
-        public Rates ExchangeRates { get; set; }
+        /// <value>The information.</value>
+        [JsonProperty(PropertyName = "info")]
+        public string Info { get; set; }
     }
 }

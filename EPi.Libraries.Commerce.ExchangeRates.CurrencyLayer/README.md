@@ -1,6 +1,6 @@
 ﻿# EPi.Libraries.Commerce.ExchangeRates
 
-[![Build status](https://ci.appveyor.com/api/projects/status/d5ruha0q93g536ud?svg=true)](https://ci.appveyor.com/project/jstemerdink/epi-libraries-commerce-exchangerates)
+[![Build status](https://ci.appveyor.com/api/projects/status/d5ruha0q93g536ud/branch/master?svg=true)](https://ci.appveyor.com/project/jstemerdink/epi-libraries-commerce-exchangerates/branch/master)
 [![GitHub version](https://badge.fury.io/gh/jstemerdink%2FEPi.Libraries.Commerce.ExchangeRates.svg)](http://badge.fury.io/gh/jstemerdink%2FEPi.Libraries.Commerce.ExchangeRates)
 [![Platform](https://img.shields.io/badge/platform-.NET 4.5-blue.svg?style=flat)](https://msdn.microsoft.com/en-us/library/w0x726c2%28v=vs.110%29.aspx)
 [![Platform](https://img.shields.io/badge/EPiServer%20Commerce-%209.2.1-orange.svg?style=flat)](http://world.episerver.com/cms/)
@@ -9,7 +9,9 @@
 By Jeroen Stemerdink
 
 ## About
-This will Fixer.io as an exchange rate service that will be consumed by the exchange rate scheduled job.
+This will add currencylayer.com as an exchange rate service that will be consumed by the exchange rate scheduled job.
+This service has a free plan of a 1000 requests month.
+
 
 ## Requirements
 

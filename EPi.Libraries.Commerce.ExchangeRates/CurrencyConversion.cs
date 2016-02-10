@@ -21,6 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+using System;
+
 namespace EPi.Libraries.Commerce.ExchangeRates
 {
     /// <summary>
@@ -44,6 +46,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         public string Name { get; private set; }
 
         /// <summary>
+        /// Gets the currency rate date.
+        /// </summary>
+        /// <value>The currency rate date.</value>
+        public DateTime CurrencyRateDate { get; private set; }
+
+        /// <summary>
         ///     Initializes a new instance of the <see cref="CurrencyConversion" /> class.
         /// </summary>
         /// <param name="currency">The currency.</param>
@@ -54,6 +62,22 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             this.Currency = currency;
             this.Name = name;
             this.Factor = factor;
+            this.CurrencyRateDate = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CurrencyConversion"/> class.
+        /// </summary>
+        /// <param name="currency">The currency.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="factor">The factor.</param>
+        /// <param name="updated">The updated.</param>
+        public CurrencyConversion(string currency, string name, decimal factor, DateTime updated)
+        {
+            this.Currency = currency;
+            this.Name = name;
+            this.Factor = factor;
+            this.CurrencyRateDate = updated;
         }
     }
 }

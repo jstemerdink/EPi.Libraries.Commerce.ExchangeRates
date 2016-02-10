@@ -259,6 +259,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExchangeRateServiceBase.cs" />
     <Compile Include="ExchangeRatesImportJob.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IExchangeRateService.cs" />
