@@ -23,3 +23,7 @@ This will a scheduled job to your commerce project, which updates the exchange r
 [Fixer exchange rate provider](EPi.Libraries.Commerce.ExchangeRates.Fixer/README.md)
 
 [Currency layer exchange rate provider](EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer/README.md)
+
+> *Powered by ReSharper*
+
+> [![image](http://resources.jetbrains.com/assets/media/open-graph/jetbrains_250x250.png)](http://jetbrains.com)
