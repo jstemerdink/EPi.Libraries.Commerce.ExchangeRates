@@ -15,3 +15,7 @@ This will a scheduled job to your commerce project, which updates the exchange r
 
 * EPiServer Commerce >= 9.2.1
 * .Net 4.5
+
+> *Powered by ReSharper*
+
+> [![image](http://resources.jetbrains.com/assets/media/open-graph/jetbrains_250x250.png)](http://jetbrains.com)

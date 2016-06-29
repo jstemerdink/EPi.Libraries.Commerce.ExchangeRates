@@ -1,5 +1,5 @@
-﻿// Copyright © 2015 Jeroen Stemerdink. 
-// 
+﻿// Copyright © 2015 Jeroen Stemerdink.
+//
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
 // files (the "Software"), to deal in the Software without
@@ -8,10 +8,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -175,31 +175,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
             foreach (CurrencyConversion to in toCurrencies)
             {
-                double rate = (double)(@from.Factor / to.Factor);
-                CurrencyDto.CurrencyRow fromRow = GetCurrency(dto, @from.Currency);
-                CurrencyDto.CurrencyRow toRow = GetCurrency(dto, to.Currency);
-
                 try
                 {
-                    CurrencyDto.CurrencyRateRow existingRow = rates.Rows.Cast<CurrencyDto.CurrencyRateRow>().FirstOrDefault(row => row.FromCurrencyId == fromRow.CurrencyId && row.ToCurrencyId == toRow.CurrencyId);
-
-                    if (existingRow != null)
-                    {
-                        existingRow.AverageRate = rate;
-                        existingRow.EndOfDayRate = rate;
-                        existingRow.CurrencyRateDate = to.CurrencyRateDate;
-                        existingRow.ModifiedDate = DateTime.Now;
-                    }
-                    else
-                    {
-                        if (fromRow.CurrencyId == toRow.CurrencyId)
-                        {
-                            continue;
-                        }
-
-                        rates.AddCurrencyRateRow(rate, rate, DateTime.Now, fromRow, toRow, to.CurrencyRateDate);
-                    }
-
+                    double rate = (double)(to.Factor / from.Factor);
+                    CurrencyDto.CurrencyRow fromRow = GetCurrency(dto, from.Currency);
+                    CurrencyDto.CurrencyRow toRow = GetCurrency(dto, to.Currency);
+                    rates.AddCurrencyRateRow(rate, rate, DateTime.Now, fromRow, toRow, to.CurrencyRateDate);
                     this.log.Information("[Exchange Rates : Job] Exchange rate updated for {0} : {1} ", to.Name, to.Factor);
                 }
                 catch (Exception exception)
