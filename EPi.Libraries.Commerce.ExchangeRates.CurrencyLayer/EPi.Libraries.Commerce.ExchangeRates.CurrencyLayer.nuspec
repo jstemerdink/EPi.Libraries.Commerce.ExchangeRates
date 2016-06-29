@@ -14,7 +14,7 @@
     <copyright>Copyright © Jeroen Stemerdink 2015</copyright>
     <tags>commerce exchange currency scheduled job currency layer</tags>
     <dependencies>
-      <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="1.0.0" />
+      <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="1.0.1" />
     </dependencies>
   </metadata>
   <files>

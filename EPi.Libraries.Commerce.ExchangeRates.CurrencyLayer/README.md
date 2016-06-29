@@ -18,3 +18,7 @@ This service has a free plan of a 1000 requests month.
 * EPiServer Commerce >= 9.2.1
 * .Net 4.5
 * EPi.Libraries.Commerce.ExchangeRates
+
+> *Powered by ReSharper*
+
+> [![image](http://resources.jetbrains.com/assets/media/open-graph/jetbrains_250x250.png)](http://jetbrains.com)
