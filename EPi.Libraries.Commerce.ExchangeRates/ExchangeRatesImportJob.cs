@@ -180,8 +180,33 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     double rate = (double)(to.Factor / from.Factor);
                     CurrencyDto.CurrencyRow fromRow = GetCurrency(dto, from.Currency);
                     CurrencyDto.CurrencyRow toRow = GetCurrency(dto, to.Currency);
-                    rates.AddCurrencyRateRow(rate, rate, DateTime.Now, fromRow, toRow, to.CurrencyRateDate);
-                    this.log.Information("[Exchange Rates : Job] Exchange rate updated for {0} : {1} ", to.Name, to.Factor);
+
+                    CurrencyDto.CurrencyRateRow existingRow = rates.Rows.Cast<CurrencyDto.CurrencyRateRow>().LastOrDefault(row => row.FromCurrencyId == fromRow.CurrencyId && row.ToCurrencyId == toRow.CurrencyId);
+
+                    if (existingRow != null)
+                    {
+                        existingRow.BeginEdit();
+
+                        existingRow.AverageRate = rate;
+                        existingRow.EndOfDayRate = rate;
+                        existingRow.CurrencyRateDate = to.CurrencyRateDate;
+                        existingRow.ModifiedDate = DateTime.Now;
+
+                        existingRow.EndEdit();
+
+                        this.log.Information("[Exchange Rates : Job] Exchange rate updated for {0} : {1} ", to.Name, to.Factor);
+                    }
+                    else
+                    {
+                        if (fromRow.CurrencyId == toRow.CurrencyId)
+                        {
+                            continue;
+                        }
+
+                        rates.AddCurrencyRateRow(rate, rate, DateTime.Now, fromRow, toRow, to.CurrencyRateDate);
+
+                        this.log.Information("[Exchange Rates : Job] Exchange rate added for {0} : {1} ", to.Name, to.Factor);
+                    }
                 }
                 catch (Exception exception)
                 {
