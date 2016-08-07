@@ -20,6 +20,12 @@ after_build:
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.nupkg"
 - cmd: nuget pack EPi.Libraries.Commerce.ExchangeRates.Fixer\EPi.Libraries.Commerce.ExchangeRates.Fixer.csproj -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.nupkg"
+- 7z a EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates\bin\Release\EPi.Libraries.Commerce.ExchangeRates.dll
+- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.zip"
+- 7z a EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.dll
+- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.zip"
+- 7z a EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.Fixer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.Fixer.dll
+- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.zip"
 before_package:
 - ps: >-
     Write-Host -NoNewline "Installing NuGet 3.3.0..."
@@ -31,10 +37,13 @@ deploy:
   api_key:
     secure: 9Z+KYPk2hI7hg9kYLv/N13fvoqcYCP96isNUkRrKu0v87cw85H62oe/DCwpqvBXF
   skip_symbols: true
+  artifact: /.*\.nupkg/
   on:
     branch: develop
 - provider: GitHub
   auth_token:
     secure: TaDEavUfTj6EgwcO7y5njQVS5Z9bBU/fVFuSApo5XEO6FSBT5UzJQmyJjbhIFDZb
+  artifact: /.*\.zip/
   on:
     branch: master
+    appveyor_repo_tag: true
