@@ -39,11 +39,12 @@ deploy:
   skip_symbols: true
   artifact: /.*\.nupkg/
   on:
-    branch: develop
+    branch: develop             # release from develop branch only
+    appveyor_repo_tag: true     # deploy on tag push only
 - provider: GitHub
   auth_token:
     secure: TaDEavUfTj6EgwcO7y5njQVS5Z9bBU/fVFuSApo5XEO6FSBT5UzJQmyJjbhIFDZb
   artifact: /.*\.zip/
   on:
-    branch: master
-    appveyor_repo_tag: true
+    branch: master              # release from master branch only
+    appveyor_repo_tag: true     # deploy on tag push only
