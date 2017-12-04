@@ -1,4 +1,4 @@
-﻿// Copyright © 2015 Jeroen Stemerdink. 
+﻿// Copyright © 2017 Jeroen Stemerdink. 
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,10 +21,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-using Newtonsoft.Json;
-
 namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 {
+    using Newtonsoft.Json;
+
     /// <summary>
     ///     Class Error.
     /// </summary>
@@ -38,17 +38,17 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
         public int Code { get; set; }
 
         /// <summary>
-        ///     Gets or sets the type.
-        /// </summary>
-        /// <value>The type.</value>
-        [JsonProperty(PropertyName = "type")]
-        public string Type { get; set; }
-
-        /// <summary>
         ///     Gets or sets the information.
         /// </summary>
         /// <value>The information.</value>
         [JsonProperty(PropertyName = "info")]
         public string Info { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the type.
+        /// </summary>
+        /// <value>The type.</value>
+        [JsonProperty(PropertyName = "type")]
+        public string Type { get; set; }
     }
 }

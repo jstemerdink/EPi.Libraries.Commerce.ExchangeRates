@@ -1,4 +1,4 @@
-﻿// Copyright © 2015 Jeroen Stemerdink. 
+﻿// Copyright © 2017 Jeroen Stemerdink. 
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,11 +21,11 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-
 namespace EPi.Libraries.Commerce.ExchangeRates
 {
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+
     /// <summary>
     ///     Interface IExchangeRateService
     /// </summary>
