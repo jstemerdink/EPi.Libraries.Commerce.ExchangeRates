@@ -1,29 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using EPiServer.Logging;
+﻿// Copyright © 2017 Jeroen Stemerdink.
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
 
 namespace EPi.Libraries.Commerce.ExchangeRates
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.Globalization;
+    using System.Linq;
+
+    using EPiServer.Logging;
+
     /// <summary>
-    /// Class ExchangeRateServiceBase.
+    ///     Class ExchangeRateServiceBase.
     /// </summary>
     public abstract class ExchangeRateServiceBase : IExchangeRateService
     {
         /// <summary>
-        /// The log
+        ///     The log
         /// </summary>
         protected ILogger Log = LogManager.GetLogger();
-
-        /// <summary>
-        /// The regions infos
-        /// </summary>
-        private ReadOnlyCollection<RegionInfo> RegionsInfo { get; set; }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
@@ -34,7 +50,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         }
 
         /// <summary>
-        /// Gets the exchange rates.
+        ///     The regions infos
+        /// </summary>
+        private ReadOnlyCollection<RegionInfo> RegionsInfo { get; }
+
+        /// <summary>
+        ///     Gets the exchange rates.
         /// </summary>
         /// <returns>ReadOnlyCollection&lt;CurrencyConversion&gt;.</returns>
         public abstract ReadOnlyCollection<CurrencyConversion> GetExchangeRates(out List<string> messages);
@@ -46,9 +67,10 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <returns>System.String.</returns>
         protected string GetCurrencyName(string isoCurrencySymbol)
         {
-            RegionInfo currencyRegion =
-                this.RegionsInfo.FirstOrDefault(
-                    r => r.ISOCurrencySymbol.Equals(isoCurrencySymbol, StringComparison.OrdinalIgnoreCase));
+            RegionInfo currencyRegion = this.RegionsInfo.FirstOrDefault(
+                r => r.ISOCurrencySymbol.Equals(
+                    value: isoCurrencySymbol,
+                    comparisonType: StringComparison.OrdinalIgnoreCase));
 
             return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyEnglishName;
         }
@@ -64,19 +86,21 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
             try
             {
-                cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
+                cultures = CultureInfo.GetCultures(types: CultureTypes.AllCultures);
             }
             catch (ArgumentOutOfRangeException argumentOutOfRangeException)
             {
-                this.Log.Error("[Exchange Rates : Service] Error getting culture info", argumentOutOfRangeException);
-                return new ReadOnlyCollection<RegionInfo>(regions);
+                this.Log.Error(
+                    "[Exchange Rates : Service] Error getting culture info",
+                    exception: argumentOutOfRangeException);
+                return new ReadOnlyCollection<RegionInfo>(list: regions);
             }
 
-            //loop through all the cultures found
+            // loop through all the cultures found
             foreach (CultureInfo culture in cultures)
             {
-                //pass the current culture's Locale ID (http://msdn.microsoft.com/en-us/library/0h88fahh.aspx)
-                //to the RegionInfo constructor to gain access to the information for that culture
+                // pass the current culture's Locale ID (http://msdn.microsoft.com/en-us/library/0h88fahh.aspx)
+                // to the RegionInfo constructor to gain access to the information for that culture
                 try
                 {
                     if (culture.IsNeutralCulture)
@@ -84,16 +108,19 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                         continue;
                     }
 
-                    RegionInfo region = new RegionInfo(culture.LCID);
-                    regions.Add(region);
+                    RegionInfo region = new RegionInfo(culture: culture.LCID);
+                    regions.Add(item: region);
                 }
                 catch (ArgumentException argumentException)
                 {
-                    this.Log.Error("[Exchange Rates : Service] Error adding region info for: {0}", culture.EnglishName, argumentException);
+                    this.Log.Error(
+                        "[Exchange Rates : Service] Error adding region info for: {0}",
+                        culture.EnglishName,
+                        argumentException);
                 }
             }
 
-            return new ReadOnlyCollection<RegionInfo>(regions);
+            return new ReadOnlyCollection<RegionInfo>(list: regions);
         }
     }
 }

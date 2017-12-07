@@ -4,17 +4,17 @@
     <id>$id$</id>
     <version>$version$</version>
     <title>$title$</title>
-    <authors>$author$</authors>
-    <owners>$author$</owners>
+    <authors>Jeroen Stemerdink</authors>
+    <owners>Jeroen Stemerdink</owners>
     <projectUrl>https://github.com/jstemerdink/EPi.Libraries.Commerce.ExchangeRates</projectUrl>
     <iconUrl>http://jstemerdink.net/images/js-nuget.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>$description$</description>
+    <description>Gets exchange rates from CurrencyLayer</description>
     <releaseNotes></releaseNotes>
     <copyright>Copyright © Jeroen Stemerdink 2015</copyright>
     <tags>commerce exchange currency scheduled job currency layer</tags>
     <dependencies>
-      <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="1.0.1" />
+      <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="2.0.0" />
     </dependencies>
   </metadata>
   <files>

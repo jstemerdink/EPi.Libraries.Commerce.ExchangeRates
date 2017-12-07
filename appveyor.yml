@@ -1,18 +1,20 @@
 version: 1.0.{build}
-image: Visual Studio 2013
+image: Visual Studio 2017
 configuration: Release
 environment:
   github_token: 'secure: TaDEavUfTj6EgwcO7y5njQVS5Z9bBU/fVFuSApo5XEO6FSBT5UzJQmyJjbhIFDZb'
   myget_token: 'secure: 9Z+KYPk2hI7hg9kYLv/N13fvoqcYCP96isNUkRrKu0v87cw85H62oe/DCwpqvBXF'
 install:
 - choco install gitversion.portable -pre -y
+- choco install "msbuild-sonarqube-runner" -y
 - cmd: nuget sources add -Name EPiServerFeed -Source http://nuget.episerver.com/feed/packages.svc/
 before_build:
 - cmd: nuget restore
 - ps: gitversion /l console /output buildserver /updateAssemblyInfo
-build:
-  project: EPi.Libraries.Commerce.ExchangeRates.sln
-  verbosity: normal
+build_script:
+  - MSBuild.SonarQube.Runner.exe begin /k:"jstemerdink:EPi.Libraries.Commerce.ExchangeRates" /n:"EPi.Libraries.Commerce.ExchangeRates" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=jstemerdink-github" /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
+  - msbuild "EPi.Libraries.Commerce.ExchangeRates.sln"
+  - MSBuild.SonarQube.Runner.exe end /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
 after_build:
 - cmd: nuget pack EPi.Libraries.Commerce.ExchangeRates\EPi.Libraries.Commerce.ExchangeRates.csproj -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.nupkg"
@@ -20,6 +22,12 @@ after_build:
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.nupkg"
 - cmd: nuget pack EPi.Libraries.Commerce.ExchangeRates.Fixer\EPi.Libraries.Commerce.ExchangeRates.Fixer.csproj -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.nupkg"
+- 7z a EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates\bin\Release\EPi.Libraries.Commerce.ExchangeRates.dll
+- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.zip"
+- 7z a EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.dll
+- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.zip"
+- 7z a EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.Fixer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.Fixer.dll
+- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.zip"
 before_package:
 - ps: >-
     Write-Host -NoNewline "Installing NuGet 3.3.0..."
@@ -31,10 +39,13 @@ deploy:
   api_key:
     secure: 9Z+KYPk2hI7hg9kYLv/N13fvoqcYCP96isNUkRrKu0v87cw85H62oe/DCwpqvBXF
   skip_symbols: true
+  artifact: /.*\.nupkg/
   on:
-    branch: develop
+    branch: develop             # release from develop branch only
 - provider: GitHub
   auth_token:
     secure: TaDEavUfTj6EgwcO7y5njQVS5Z9bBU/fVFuSApo5XEO6FSBT5UzJQmyJjbhIFDZb
+  artifact: /.*\.zip/
   on:
-    branch: master
+    branch: master              # release from master branch only
+    #appveyor_repo_tag: true     # deploy on tag push only

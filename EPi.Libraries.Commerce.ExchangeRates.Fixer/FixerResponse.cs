@@ -1,4 +1,4 @@
-﻿// Copyright © 2015 Jeroen Stemerdink. 
+﻿// Copyright © 2017 Jeroen Stemerdink. 
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,10 +21,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-using Newtonsoft.Json;
-
 namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 {
+    using Newtonsoft.Json;
+
     /// <summary>
     ///     Class FixerResponse.
     /// </summary>
@@ -38,17 +38,17 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         public string BaseCurrency { get; set; }
 
         /// <summary>
-        ///     Gets or sets the import date.
-        /// </summary>
-        /// <value>The import date.</value>
-        [JsonProperty(PropertyName = "date")]
-        public string ImportDate { get; set; }
-
-        /// <summary>
         ///     Gets or sets the exchange rates.
         /// </summary>
         /// <value>The exchange rates.</value>
         [JsonProperty(PropertyName = "rates")]
         public Rates ExchangeRates { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the import date.
+        /// </summary>
+        /// <value>The import date.</value>
+        [JsonProperty(PropertyName = "date")]
+        public string ImportDate { get; set; }
     }
 }

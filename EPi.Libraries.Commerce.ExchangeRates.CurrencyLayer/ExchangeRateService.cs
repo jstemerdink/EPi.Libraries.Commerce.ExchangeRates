@@ -1,4 +1,4 @@
-﻿// Copyright © 2015 Jeroen Stemerdink. 
+﻿// Copyright © 2017 Jeroen Stemerdink. 
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,23 +21,22 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Configuration;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-
-using EPiServer.Logging;
-using EPiServer.ServiceLocation;
-
-using Newtonsoft.Json;
-
 namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.Configuration;
+    using System.Globalization;
+    using System.IO;
+    using System.Net;
+    using System.Reflection;
+
+    using EPiServer.Logging;
+    using EPiServer.ServiceLocation;
+
+    using Newtonsoft.Json;
+
     /// <summary>
     ///     Class FixerExchangeRateService.
     /// </summary>
@@ -58,23 +57,22 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             {
                 string accessKey = ConfigurationManager.AppSettings["exchangerates.currencylayer.accesskey"];
 
-                if (string.IsNullOrWhiteSpace(accessKey))
+                if (string.IsNullOrWhiteSpace(value: accessKey))
                 {
                     string keyMissingMessage = "[Exchange Rates : CurrencyLayer] Access key not configured";
-                    messages.Add(keyMissingMessage);
-                    this.Log.Information(keyMissingMessage);
-                    return new ReadOnlyCollection<CurrencyConversion>(currencyConversions);
+                    messages.Add(item: keyMissingMessage);
+                    this.Log.Information(message: keyMissingMessage);
+                    return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
                 }
 
                 string requestUrl = string.Format(
-                    CultureInfo.InvariantCulture,
-                    "http://www.apilayer.net/api/live?access_key={0}&source=USD",
-                    accessKey);
+                    provider: CultureInfo.InvariantCulture,
+                    format: "http://www.apilayer.net/api/live?access_key={0}&source=USD",
+                    arg0: accessKey);
 
-
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUrl);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUriString: requestUrl);
                 request.Method = WebRequestMethods.Http.Get;
-                
+
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
                 using (StreamReader streamReader = new StreamReader(response.GetResponseStream()))
@@ -82,59 +80,66 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                     jsonResponse = streamReader.ReadToEnd();
                 }
 
-                CurrencyLayerResponse currencyLayerResponse = JsonConvert.DeserializeObject<CurrencyLayerResponse>(jsonResponse);
+                CurrencyLayerResponse currencyLayerResponse =
+                    JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
 
                 if (!currencyLayerResponse.Success)
                 {
                     string failMessage = string.Format(
-                        CultureInfo.InvariantCulture,
-                        "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer: '{0}'", currencyLayerResponse.Error.Info);
+                        provider: CultureInfo.InvariantCulture,
+                        format:
+                        "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer: '{0}'",
+                        arg0: currencyLayerResponse.Error.Info);
 
-                    messages.Add(failMessage);
-                    this.Log.Information(failMessage);
-                    return new ReadOnlyCollection<CurrencyConversion>(currencyConversions);
+                    messages.Add(item: failMessage);
+                    this.Log.Information(message: failMessage);
+                    return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
                 }
-                
-                DateTime exchangeRateDate = UnixTimeStampToDateTime(currencyLayerResponse.Timestamp);
+
+                DateTime exchangeRateDate = UnixTimeStampToDateTime(unixTimeStamp: currencyLayerResponse.Timestamp);
 
                 currencyConversions.Add(
                     new CurrencyConversion(
-                        currencyLayerResponse.BaseCurrency, this.GetCurrencyName(currencyLayerResponse.BaseCurrency),
-                        1m, exchangeRateDate));
-                
+                        currency: currencyLayerResponse.BaseCurrency,
+                        name: this.GetCurrencyName(isoCurrencySymbol: currencyLayerResponse.BaseCurrency),
+                        factor: 1m,
+                        updated: exchangeRateDate));
+
                 foreach (PropertyInfo propertyInfo in typeof(Quotes).GetProperties())
                 {
                     string currencyCode = propertyInfo.Name.Substring(3);
-                    string currencyName = this.GetCurrencyName(currencyCode);
-                    float exchangeRate =
-                        (float)currencyLayerResponse.Quotes.GetType()
-                            .GetProperty(propertyInfo.Name)
-                            .GetValue(currencyLayerResponse.Quotes, null);
+                    string currencyName = this.GetCurrencyName(isoCurrencySymbol: currencyCode);
+                    float exchangeRate = (float)currencyLayerResponse.Quotes.GetType()
+                        .GetProperty(name: propertyInfo.Name).GetValue(obj: currencyLayerResponse.Quotes, index: null);
 
                     CurrencyConversion currencyConversion = new CurrencyConversion(
-                        currencyCode,
-                        currencyName,
-                        Convert.ToDecimal(exchangeRate, CultureInfo.CreateSpecificCulture("en-US")), exchangeRateDate);
+                        currency: currencyCode,
+                        name: currencyName,
+                        factor: Convert.ToDecimal(
+                            value: exchangeRate,
+                            provider: CultureInfo.CreateSpecificCulture("en-US")),
+                        updated: exchangeRateDate);
 
-                    currencyConversions.Add(currencyConversion);
+                    currencyConversions.Add(item: currencyConversion);
                 }
             }
             catch (Exception exception)
             {
-                string failMessage = "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer";
-                messages.Add(failMessage);
-                this.Log.Error(failMessage, exception);
+                string failMessage =
+                    "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer";
+                messages.Add(item: failMessage);
+                this.Log.Error(message: failMessage, exception: exception);
                 this.Log.Information("[Exchange Rates : CurrencyLayer] JSON response: {0}", jsonResponse);
             }
 
-            return new ReadOnlyCollection<CurrencyConversion>(currencyConversions);
+            return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
         }
 
         private static DateTime UnixTimeStampToDateTime(float unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
-            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, kind: DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddSeconds(value: unixTimeStamp).ToLocalTime();
             return dtDateTime;
         }
     }

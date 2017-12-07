@@ -1,4 +1,4 @@
-﻿// Copyright © 2015 Jeroen Stemerdink. 
+﻿// Copyright © 2017 Jeroen Stemerdink. 
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,22 +21,21 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-
-using EPiServer.Logging;
-using EPiServer.ServiceLocation;
-
-using Newtonsoft.Json;
-
 namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.Globalization;
+    using System.IO;
+    using System.Net;
+    using System.Reflection;
+
+    using EPiServer.Logging;
+    using EPiServer.ServiceLocation;
+
+    using Newtonsoft.Json;
+
     /// <summary>
     ///     Class ExchangeRateService.
     /// </summary>
@@ -68,43 +67,47 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                     jsonResponse = streamReader.ReadToEnd();
                 }
 
-                FixerResponse fixerResponse = JsonConvert.DeserializeObject<FixerResponse>(jsonResponse);
+                FixerResponse fixerResponse = JsonConvert.DeserializeObject<FixerResponse>(value: jsonResponse);
 
                 currencyConversions.Add(
                     new CurrencyConversion(
-                        fixerResponse.BaseCurrency,
-                        this.GetCurrencyName(fixerResponse.BaseCurrency),
-                        1m,
-                        DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture)));
+                        currency: fixerResponse.BaseCurrency,
+                        name: this.GetCurrencyName(isoCurrencySymbol: fixerResponse.BaseCurrency),
+                        factor: 1m,
+                        updated: DateTime.ParseExact(
+                            s: fixerResponse.ImportDate,
+                            format: "yyyy-MM-dd",
+                            provider: CultureInfo.InvariantCulture)));
 
                 foreach (PropertyInfo propertyInfo in typeof(Rates).GetProperties())
                 {
-                    string currencyName = this.GetCurrencyName(propertyInfo.Name);
-                    float exchangeRate =
-                        (float)
-                        fixerResponse.ExchangeRates.GetType()
-                            .GetProperty(propertyInfo.Name)
-                            .GetValue(fixerResponse.ExchangeRates, null);
+                    string currencyName = this.GetCurrencyName(isoCurrencySymbol: propertyInfo.Name);
+                    float exchangeRate = (float)fixerResponse.ExchangeRates.GetType()
+                        .GetProperty(name: propertyInfo.Name).GetValue(obj: fixerResponse.ExchangeRates, index: null);
 
                     CurrencyConversion currencyConversion = new CurrencyConversion(
-                        propertyInfo.Name,
-                        currencyName,
-                        Convert.ToDecimal(exchangeRate, CultureInfo.CreateSpecificCulture("en-US")),
-                        DateTime.ParseExact(fixerResponse.ImportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture));
+                        currency: propertyInfo.Name,
+                        name: currencyName,
+                        factor: Convert.ToDecimal(
+                            value: exchangeRate,
+                            provider: CultureInfo.CreateSpecificCulture("en-US")),
+                        updated: DateTime.ParseExact(
+                            s: fixerResponse.ImportDate,
+                            format: "yyyy-MM-dd",
+                            provider: CultureInfo.InvariantCulture));
 
-                    currencyConversions.Add(currencyConversion);
+                    currencyConversions.Add(item: currencyConversion);
                 }
             }
             catch (Exception exception)
             {
                 string failMessage = "[Exchange Rates : Fixer] Error retrieving exchange rates from fixer.io";
-                messages.Add(failMessage);
-                this.Log.Error(failMessage, exception);
+                messages.Add(item: failMessage);
+                this.Log.Error(message: failMessage, exception: exception);
                 this.Log.Information("[Exchange Rates : CurrencyLayer] JSON response: {0}", jsonResponse);
             }
 
-            return new ReadOnlyCollection<CurrencyConversion>(currencyConversions);
+            return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
         }
-
     }
 }
