@@ -11,7 +11,7 @@ install:
 - choco install "msbuild-sonarqube-runner" -y
 - cmd: nuget sources add -Name EPiServerFeed -Source http://nuget.episerver.com/feed/packages.svc/
 - ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
-- cmd: appveyor-tools\secure-file -decrypt EPi.Libraries.Commerce.ExchangeRates\EPi.Libraries.Commerce.ExchangeRates.Tests\app.config.enc -secret %app_config%
+- cmd: appveyor-tools\secure-file -decrypt EPi.Libraries.Commerce.ExchangeRates.Tests\app.config.enc -secret %app_config%
 before_build:
 - cmd: nuget restore
 - ps: gitversion /l console /output buildserver /updateAssemblyInfo
