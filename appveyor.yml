@@ -4,15 +4,19 @@ configuration: Release
 environment:
   github_token: 'secure: TaDEavUfTj6EgwcO7y5njQVS5Z9bBU/fVFuSApo5XEO6FSBT5UzJQmyJjbhIFDZb'
   myget_token: 'secure: 9Z+KYPk2hI7hg9kYLv/N13fvoqcYCP96isNUkRrKu0v87cw85H62oe/DCwpqvBXF'
+  app_config:
+    secure: XbnOIy6gwKLjvlNDjLRGepn9JsztX4v0d6p/FqvIaU78rQ72fkG507sJ41Bk0uwmbl1IVJ396ilCb+5W4pRSCw==
 install:
 - choco install gitversion.portable -pre -y
 - choco install "msbuild-sonarqube-runner" -y
 - cmd: nuget sources add -Name EPiServerFeed -Source http://nuget.episerver.com/feed/packages.svc/
+- ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
+- cmd: appveyor-tools\secure-file -decrypt EPi.Libraries.Commerce.ExchangeRates\EPi.Libraries.Commerce.ExchangeRates.Tests\app.config.enc -secret %app_config%
 before_build:
 - cmd: nuget restore
 - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 build_script:
-  - SonarScanner.MSBuild.exe begin /k:"jstemerdink:EPi.Libraries.Commerce.ExchangeRates" /n:"EPi.Libraries.Commerce.ExchangeRates" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=jstemerdink-github" /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
+  - SonarScanner.MSBuild.exe begin /k:"jstemerdink:EPi.Libraries.Commerce.ExchangeRates" /n:"EPi.Libraries.Commerce.ExchangeRates" /d:"sonar.host.url=https://sonarcloud.io" /o:"jstemerdink-github" /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
   - msbuild "EPi.Libraries.Commerce.ExchangeRates.sln"
   - SonarScanner.MSBuild.exe end /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
 after_build:
