@@ -26,6 +26,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Configuration;
     using System.Globalization;
     using System.IO;
     using System.Net;
@@ -43,6 +44,10 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     public class ExchangeRateService : ExchangeRateServiceBase
     {
         private const string FailMessage = "[Exchange Rates : Fixer] Error retrieving exchange rates from fixer.io";
+
+        private const string KeyMissingMessage = "[Exchange Rates : Fixer] Access key not configured";
+
+        private const string UrlMissingMessage = "[Exchange Rates : Fixer] Api Url not configured";
 
         /// <summary>
         ///     Gets the exchange rates.
@@ -98,9 +103,24 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         {
             string jsonResponse = string.Empty;
 
+            string accessKey = ConfigurationManager.AppSettings["exchangerates.fixer.accesskey"];
+            string apiUrl = ConfigurationManager.AppSettings["exchangerates.fixer.apiurl"];
+
+            if (string.IsNullOrWhiteSpace(value: accessKey))
+            {
+                this.log.Error(message: KeyMissingMessage);
+            }
+
+            if (string.IsNullOrWhiteSpace(value: apiUrl))
+            {
+                this.log.Error(message: UrlMissingMessage);
+            }
+
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://api.fixer.io/latest?base=USD");
+                string requestUrl = $"{apiUrl}latest?access_key={accessKey}";
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUrl);
                 request.ContentType = "application/json; charset=utf-8";
                 request.Method = WebRequestMethods.Http.Get;
                 request.Accept = "application/json";

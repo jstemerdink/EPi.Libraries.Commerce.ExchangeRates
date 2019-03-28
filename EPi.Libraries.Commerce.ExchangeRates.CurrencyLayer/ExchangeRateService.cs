@@ -47,6 +47,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 
         private const string KeyMissingMessage = "[Exchange Rates : CurrencyLayer] Access key not configured";
 
+        private const string UrlMissingMessage = "[Exchange Rates : CurrencyLayer] Api Url not configured";
+
         /// <summary>
         /// Gets the exchange rates.
         /// </summary>
@@ -128,18 +130,23 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             string jsonResponse = string.Empty;
 
             string accessKey = ConfigurationManager.AppSettings["exchangerates.currencylayer.accesskey"];
+            string apiUrl = ConfigurationManager.AppSettings["exchangerates.currencylayer.apiurl"];
 
             if (string.IsNullOrWhiteSpace(value: accessKey))
             {
                 this.log.Error(message: KeyMissingMessage);
+                return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
+            }
+
+            if (string.IsNullOrWhiteSpace(value: apiUrl))
+            {
+                this.log.Error(message: UrlMissingMessage);
+                return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
             }
 
             try
             {
-                string requestUrl = string.Format(
-                    provider: CultureInfo.InvariantCulture,
-                    format: "http://www.apilayer.net/api/live?access_key={0}&source=USD",
-                    arg0: accessKey);
+                string requestUrl = $"{apiUrl}live?access_key={accessKey}&source=USD";
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUriString: requestUrl);
                 request.Method = WebRequestMethods.Http.Get;

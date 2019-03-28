@@ -55,9 +55,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         private readonly IExchangeRateService exchangeRateService;
 
         /// <summary>
-        ///     The conversion rates to USD
+        ///     The conversion rates
         /// </summary>
-        private ReadOnlyCollection<CurrencyConversion> conversionRatesToUsd;
+        private ReadOnlyCollection<CurrencyConversion> currencyConversions;
 
         /// <summary>
         ///     The stop signaled
@@ -89,7 +89,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
             List<string> messages;
 
-            this.conversionRatesToUsd = this.exchangeRateService.GetExchangeRates(messages: out messages);
+            this.currencyConversions = this.exchangeRateService.GetExchangeRates(messages: out messages);
 
             if (!messages.Any())
             {
@@ -226,7 +226,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                 return messages;
             }
 
-            if (!this.conversionRatesToUsd.Any())
+            if (!this.currencyConversions.Any())
             {
                 messages.Add("Error retrieving exchange rates from service");
                 return messages;
@@ -236,7 +236,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
             CurrencyDto dto = CurrencyManager.GetCurrencyDto();
 
-            foreach (CurrencyConversion conversion in this.conversionRatesToUsd)
+            foreach (CurrencyConversion conversion in this.currencyConversions)
             {
                 if (this.stopSignaled)
                 {
@@ -244,7 +244,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     break;
                 }
 
-                List<CurrencyConversion> toCurrencies = this.conversionRatesToUsd.Where(c => c != conversion).ToList();
+                List<CurrencyConversion> toCurrencies = this.currencyConversions.Where(c => c != conversion).ToList();
                 messages = this.AddRates(dto: dto, from: conversion, toCurrencies: toCurrencies);
             }
 
@@ -261,7 +261,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             bool isDirty = false;
             CurrencyDto dto = CurrencyManager.GetCurrencyDto();
 
-            foreach (CurrencyConversion conversion in this.conversionRatesToUsd)
+            foreach (CurrencyConversion conversion in this.currencyConversions)
             {
                 CurrencyDto.CurrencyRow currencyRow = GetCurrency(dto: dto, currencyCode: conversion.Currency);
 
