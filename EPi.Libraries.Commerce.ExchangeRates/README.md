@@ -9,7 +9,6 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=reliability_rating)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=security_rating)](https://sonarcloud.io/component_measures?id=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=security_rating)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=sqale_rating)
-[![Waffle.io - Columns and their card count](https://badge.waffle.io/jstemerdink/EPi.Libraries.Commerce.ExchangeRates.svg?columns=all)](https://waffle.io/jstemerdink/EPi.Libraries.Commerce.ExchangeRates)
 [![NuGet](https://img.shields.io/badge/NuGet-Release-blue.svg)](https://nuget.episerver.com/package/?id=EPi.Libraries.Commerce.ExchangeRates)
 
 By Jeroen Stemerdink

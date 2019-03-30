@@ -10,7 +10,6 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=reliability_rating)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=security_rating)](https://sonarcloud.io/component_measures?id=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=security_rating)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=jstemerdink%3AEPi.Libraries.Commerce.ExchangeRates&metric=sqale_rating)
-[![Waffle.io - Columns and their card count](https://badge.waffle.io/jstemerdink/EPi.Libraries.Commerce.ExchangeRates.svg?columns=all)](https://waffle.io/jstemerdink/EPi.Libraries.Commerce.ExchangeRates)
 
 By Jeroen Stemerdink
 
@@ -32,3 +31,6 @@ This will a scheduled job to your commerce project, which updates the exchange r
 
 > *Powered by ReSharper*
 > [![image](https://i0.wp.com/jstemerdink.files.wordpress.com/2017/08/logo_resharper.png)](http://jetbrains.com)
+
+> *Powered by OzCode*
+> [![image](https://jstemerdink.files.wordpress.com/2019/03/ozcode.jpg)](http://www.oz-code.com)
