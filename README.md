@@ -31,3 +31,6 @@ This will a scheduled job to your commerce project, which updates the exchange r
 
 > *Powered by ReSharper*
 > [![image](https://i0.wp.com/jstemerdink.files.wordpress.com/2017/08/logo_resharper.png)](http://jetbrains.com)
+
+> *Powered by OzCode*
+> [![image](https://jstemerdink.files.wordpress.com/2019/03/ozcode.jpg)](http://www.oz-code.com)
