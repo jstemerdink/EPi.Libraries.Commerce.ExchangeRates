@@ -1,25 +1,25 @@
-﻿// Copyright © 2017 Jeroen Stemerdink.
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ExchangeRateServiceBase.cs" company="Jeroen Stemerdink">
+//      Copyright © 2019 Jeroen Stemerdink.
+//      Permission is hereby granted, free of charge, to any person obtaining a copy
+//      of this software and associated documentation files (the "Software"), to deal
+//      in the Software without restriction, including without limitation the rights
+//      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//      copies of the Software, and to permit persons to whom the Software is
+//      furnished to do so, subject to the following conditions:
 //
-// Permission is hereby granted, free of charge, to any person
-// obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without
-// restriction, including without limitation the rights to use,
-// copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following
-// conditions:
+//      The above copyright notice and this permission notice shall be included in all
+//      copies or substantial portions of the Software.
 //
-// The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-// OTHER DEALINGS IN THE SOFTWARE.
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//      SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace EPi.Libraries.Commerce.ExchangeRates
 {
@@ -31,40 +31,51 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
     using EPiServer.Logging;
 
+    using Mediachase.Commerce;
+    using Mediachase.Commerce.Markets;
+
     /// <summary>
     ///     Class ExchangeRateServiceBase.
     /// </summary>
     public abstract class ExchangeRateServiceBase : IExchangeRateService
     {
         /// <summary>
-        ///     The log
+        ///     The <see cref="IMarketService"/> instance.
         /// </summary>
-        protected ILogger Log = LogManager.GetLogger();
+        protected IMarketService marketService;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
+        ///     The <see cref="ILogger"/> instance.
         /// </summary>
-        protected ExchangeRateServiceBase()
+        protected ILogger log = LogManager.GetLogger();
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExchangeRateServiceBase" /> class.
+        /// </summary>
+        /// <param name="marketService">The market service.</param>
+        protected ExchangeRateServiceBase(IMarketService marketService)
         {
             this.RegionsInfo = this.GetRegions();
+            this.marketService = marketService;
         }
 
         /// <summary>
-        ///     The regions infos
+        ///     Gets the regions infos
         /// </summary>
         private ReadOnlyCollection<RegionInfo> RegionsInfo { get; }
 
         /// <summary>
         ///     Gets the exchange rates.
         /// </summary>
-        /// <returns>ReadOnlyCollection&lt;CurrencyConversion&gt;.</returns>
+        /// /// <param name="messages">A <see cref="List{T}"/> of messages.</param>
+        /// <returns>A <see cref="ReadOnlyCollection{T}"/> of <see cref="CurrencyConversion"/>.</returns>
         public abstract ReadOnlyCollection<CurrencyConversion> GetExchangeRates(out List<string> messages);
 
         /// <summary>
         ///     Gets the name of the currency.
         /// </summary>
         /// <param name="isoCurrencySymbol">The ISO currency symbol.</param>
-        /// <returns>System.String.</returns>
+        /// <returns>The currency name.</returns>
         protected string GetCurrencyName(string isoCurrencySymbol)
         {
             RegionInfo currencyRegion = this.RegionsInfo.FirstOrDefault(
@@ -75,10 +86,25 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyEnglishName;
         }
 
+        /// <summary>Gets the available currency codes.</summary>
+        /// <returns>A <see cref="List{T}"/> of currency codes.</returns>
+        protected ReadOnlyCollection<string> GetAvailableCurrencies()
+        {
+            List<IMarket> markets = this.marketService.GetAllMarkets().ToList();
+            List<string> usedCurrencies = new List<string>();
+
+            foreach (IMarket market in markets)
+            {
+                usedCurrencies.AddRange(market.Currencies.Select(marketCurrency => marketCurrency.CurrencyCode));
+            }
+
+            return new ReadOnlyCollection<string>(usedCurrencies.Distinct().ToList());
+        }
+
         /// <summary>
         ///     Gets the regions.
         /// </summary>
-        /// <returns>List&lt;RegionInfo&gt;.</returns>
+        /// <returns>A <see cref="ReadOnlyCollection{T}"/> of <see cref="RegionInfo"/>.</returns>
         private ReadOnlyCollection<RegionInfo> GetRegions()
         {
             List<RegionInfo> regions = new List<RegionInfo>();
@@ -90,7 +116,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             }
             catch (ArgumentOutOfRangeException argumentOutOfRangeException)
             {
-                this.Log.Error(
+                this.log.Error(
                     "[Exchange Rates : Service] Error getting culture info",
                     exception: argumentOutOfRangeException);
                 return new ReadOnlyCollection<RegionInfo>(list: regions);
@@ -113,7 +139,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                 }
                 catch (ArgumentException argumentException)
                 {
-                    this.Log.Error(
+                    this.log.Error(
                         "[Exchange Rates : Service] Error adding region info for: {0}",
                         culture.EnglishName,
                         argumentException);
