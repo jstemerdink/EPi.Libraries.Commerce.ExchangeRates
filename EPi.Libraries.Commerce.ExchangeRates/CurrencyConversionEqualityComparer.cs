@@ -41,7 +41,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <returns><see langword="true" /> if the specified objects are equal; otherwise, <see langword="false" />.</returns>
         public bool Equals(CurrencyConversion x, CurrencyConversion y)
         {
-            if ((x == null) | (y == null))
+            if ((x == null) || (y == null))
             {
                 return false;
             }

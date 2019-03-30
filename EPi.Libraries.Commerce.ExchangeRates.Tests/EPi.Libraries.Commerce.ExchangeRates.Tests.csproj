@@ -234,6 +234,7 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExchangeRateServiceTests.cs" />
