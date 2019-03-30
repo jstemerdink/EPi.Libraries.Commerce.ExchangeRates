@@ -11,10 +11,10 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Scheduled job to update the exchange rates in EPiServer Commerce</description>
     <releaseNotes></releaseNotes>
-    <copyright>Copyright © Jeroen Stemerdink 2017</copyright>
+    <copyright>Copyright © Jeroen Stemerdink 2019</copyright>
     <tags>commerce exchange currency scheduled job</tags>
     <dependencies>
-      <dependency id="EPiServer.Commerce" version="11.0.0" />
+      <dependency id="EPiServer.Commerce" version="13.0.0" />
     </dependencies>
   </metadata>
   <files>

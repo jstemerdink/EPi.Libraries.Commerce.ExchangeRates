@@ -11,10 +11,10 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Gets exchange rates from CurrencyLayer</description>
     <releaseNotes></releaseNotes>
-    <copyright>Copyright © Jeroen Stemerdink 2015</copyright>
+    <copyright>Copyright © Jeroen Stemerdink 2019</copyright>
     <tags>commerce exchange currency scheduled job currency layer</tags>
     <dependencies>
-      <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="2.0.0" />
+      <dependency id="EPi.Libraries.Commerce.ExchangeRates" version="3.0.0" />
     </dependencies>
   </metadata>
   <files>

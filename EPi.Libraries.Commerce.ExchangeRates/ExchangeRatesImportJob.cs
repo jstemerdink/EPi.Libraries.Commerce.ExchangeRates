@@ -1,25 +1,25 @@
-﻿// Copyright © 2017 Jeroen Stemerdink.
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ExchangeRatesImportJob.cs" company="Jeroen Stemerdink">
+//      Copyright © 2019 Jeroen Stemerdink.
+//      Permission is hereby granted, free of charge, to any person obtaining a copy
+//      of this software and associated documentation files (the "Software"), to deal
+//      in the Software without restriction, including without limitation the rights
+//      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//      copies of the Software, and to permit persons to whom the Software is
+//      furnished to do so, subject to the following conditions:
 //
-// Permission is hereby granted, free of charge, to any person
-// obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without
-// restriction, including without limitation the rights to use,
-// copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following
-// conditions:
+//      The above copyright notice and this permission notice shall be included in all
+//      copies or substantial portions of the Software.
 //
-// The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-// OTHER DEALINGS IN THE SOFTWARE.
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//      SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace EPi.Libraries.Commerce.ExchangeRates
 {
@@ -49,9 +49,15 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         private readonly ILogger log = LogManager.GetLogger();
 
         /// <summary>
-        ///     The conversion rates to USD
+        ///     Gets or sets the exchange rate service.
         /// </summary>
-        private ReadOnlyCollection<CurrencyConversion> conversionRatesToUsd;
+        /// <value>The exchange rate service.</value>
+        private readonly IExchangeRateService exchangeRateService;
+
+        /// <summary>
+        ///     The conversion rates
+        /// </summary>
+        private ReadOnlyCollection<CurrencyConversion> currencyConversions;
 
         /// <summary>
         ///     The stop signaled
@@ -59,18 +65,14 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         private bool stopSignaled;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="ExchangeRatesImportJob" /> class.
+        /// Initializes a new instance of the <see cref="ExchangeRatesImportJob" /> class.
         /// </summary>
-        public ExchangeRatesImportJob()
+        /// <param name="exchangeRateService">The exchange rate service.</param>
+        public ExchangeRatesImportJob(IExchangeRateService exchangeRateService)
         {
+            this.exchangeRateService = exchangeRateService;
             this.IsStoppable = true;
         }
-
-        /// <summary>
-        ///     Gets or sets the exchange rate service.
-        /// </summary>
-        /// <value>The exchange rate service.</value>
-        private Injected<IExchangeRateService> ExchangeRateService { get; set; }
 
         /// <summary>
         ///     Called when a scheduled job executes
@@ -87,14 +89,13 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
             List<string> messages;
 
-            this.conversionRatesToUsd = this.ExchangeRateService.Service.GetExchangeRates(messages: out messages);
+            this.currencyConversions = this.exchangeRateService.GetExchangeRates(messages: out messages);
 
             if (!messages.Any())
             {
                 messages = this.CreateConversions();
             }
 
-            // For long running jobs periodically check if stop is signaled and if so stop execution
             string returnMessage = messages.Any() ? string.Join("<br/>", values: messages) : "Exchange rates updated";
             return this.stopSignaled ? "Stop of job was called" : returnMessage;
         }
@@ -132,10 +133,22 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             IEnumerable<CurrencyConversion> toCurrencies)
         {
             List<string> messages = new List<string>();
+
+            if (this.stopSignaled)
+            {
+                return messages;
+            }
+
             CurrencyDto.CurrencyRateDataTable rates = dto.CurrencyRate;
 
             foreach (CurrencyConversion to in toCurrencies)
             {
+                if (this.stopSignaled)
+                {
+                    messages.Add("Stop of job was called");
+                    break;
+                }
+
                 try
                 {
                     double rate = (double)(to.Factor / from.Factor);
@@ -208,18 +221,30 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         {
             List<string> messages = new List<string>();
 
-            if (!this.conversionRatesToUsd.Any())
+            if (this.stopSignaled)
+            {
+                return messages;
+            }
+
+            if (!this.currencyConversions.Any())
             {
                 messages.Add("Error retrieving exchange rates from service");
+                return messages;
             }
 
             this.EnsureCurrencies();
 
             CurrencyDto dto = CurrencyManager.GetCurrencyDto();
 
-            foreach (CurrencyConversion conversion in this.conversionRatesToUsd)
+            foreach (CurrencyConversion conversion in this.currencyConversions)
             {
-                List<CurrencyConversion> toCurrencies = this.conversionRatesToUsd.Where(c => c != conversion).ToList();
+                if (this.stopSignaled)
+                {
+                    messages.Add("Stop of job was called");
+                    break;
+                }
+
+                List<CurrencyConversion> toCurrencies = this.currencyConversions.Where(c => c != conversion).ToList();
                 messages = this.AddRates(dto: dto, from: conversion, toCurrencies: toCurrencies);
             }
 
@@ -236,7 +261,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             bool isDirty = false;
             CurrencyDto dto = CurrencyManager.GetCurrencyDto();
 
-            foreach (CurrencyConversion conversion in this.conversionRatesToUsd)
+            foreach (CurrencyConversion conversion in this.currencyConversions)
             {
                 CurrencyDto.CurrencyRow currencyRow = GetCurrency(dto: dto, currencyCode: conversion.Currency);
 

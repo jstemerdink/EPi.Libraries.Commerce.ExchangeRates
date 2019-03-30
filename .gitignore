@@ -150,3 +150,6 @@ $RECYCLE.BIN/
 # Mac crap
 .DS_Store
 
+.vs/
+*.orig
+EPi.Libraries.Commerce.ExchangeRates.Tests/app.config

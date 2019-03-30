@@ -2,5 +2,6 @@
   <appSettings xdt:Transform="InsertIfMissing" />
   <appSettings>
     <add key="exchangerates.currencylayer.accesskey" value="" xdt:Transform="InsertIfMissing" xdt:Locator="Match(key)" />
+    <add key="exchangerates.currencylayer.apiurl" value="https://apilayer.net/api/" xdt:Transform="InsertIfMissing" xdt:Locator="Match(key)" />
   </appSettings>
 </configuration>
