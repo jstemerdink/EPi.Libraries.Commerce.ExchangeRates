@@ -29,11 +29,14 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     using System.Configuration;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Reflection;
 
     using EPiServer.Logging;
     using EPiServer.ServiceLocation;
+
+    using Mediachase.Commerce.Markets;
 
     using Newtonsoft.Json;
 
@@ -45,9 +48,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     {
         private const string FailMessage = "[Exchange Rates : Fixer] Error retrieving exchange rates from fixer.io";
 
+        private const string ConvertMessage = "[Exchange Rates : Fixer] Error converting exchange rate from fixer.io";
+
         private const string KeyMissingMessage = "[Exchange Rates : Fixer] Access key not configured";
 
         private const string UrlMissingMessage = "[Exchange Rates : Fixer] Api Url not configured";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExchangeRateService"/> class.
+        /// </summary>
+        /// <param name="marketService">The market service.</param>
+        public ExchangeRateService(IMarketService marketService)
+            : base(marketService: marketService)
+        {
+        }
 
         /// <summary>
         ///     Gets the exchange rates.
@@ -59,40 +73,48 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             messages = new List<string>();
 
             List<CurrencyConversion> currencyConversions = new List<CurrencyConversion>();
-            
+
+            FixerResponse fixerResponse = this.GetFixerResponse();
+
             try
             {
-                FixerResponse fixerResponse = this.GetFixerResponse();
-
-                currencyConversions.Add(
-                    new CurrencyConversion(
-                        currency: fixerResponse.BaseCurrency,
-                        name: this.GetCurrencyName(isoCurrencySymbol: fixerResponse.BaseCurrency),
-                        factor: 1m,
-                        updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture)));
-
-                foreach (PropertyInfo propertyInfo in typeof(Rates).GetProperties())
-                {
-                    string currencyCode = propertyInfo.Name;
-                    string currencyName = this.GetCurrencyName(isoCurrencySymbol: propertyInfo.Name);
-                    float exchangeRate = (float)fixerResponse.ExchangeRates.GetType().GetProperty(name: propertyInfo.Name).GetValue(obj: fixerResponse.ExchangeRates, index: null);
-
-                    CurrencyConversion currencyConversion = new CurrencyConversion(
-                        currency: currencyCode,
-                        name: currencyName,
-                        factor: Convert.ToDecimal(value: exchangeRate,provider: CultureInfo.CreateSpecificCulture("en-US")), 
-                        updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture));
-
-                    currencyConversions.Add(item: currencyConversion);
-                }
+                currencyConversions.Add(new CurrencyConversion(currency: fixerResponse.BaseCurrency, name: this.GetCurrencyName(isoCurrencySymbol: fixerResponse.BaseCurrency), factor: 1m, updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture)));
             }
             catch (Exception exception)
             {
                 messages.Add(item: FailMessage);
                 this.log.Error(message: FailMessage, exception: exception);
+                return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
             }
 
-            return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
+            foreach (PropertyInfo propertyInfo in typeof(Rates).GetProperties())
+            {
+                try
+                {
+                    string currencyCode = propertyInfo.Name;
+                    string currencyName = this.GetCurrencyName(isoCurrencySymbol: propertyInfo.Name);
+                    float exchangeRate = (float)fixerResponse.ExchangeRates.GetType().GetProperty(name: propertyInfo.Name).GetValue(obj: fixerResponse.ExchangeRates, index: null);
+
+                    if (exchangeRate.Equals(0))
+                    {
+                        continue;
+                    }
+
+                    CurrencyConversion currencyConversion = new CurrencyConversion(
+                        currency: currencyCode,
+                        name: currencyName,
+                        factor: Convert.ToDecimal(value: exchangeRate, provider: CultureInfo.CreateSpecificCulture("en-US")),
+                        updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture));
+
+                    currencyConversions.Add(item: currencyConversion);
+                }
+                catch (Exception exception)
+                {
+                    this.log.Error(message: ConvertMessage, exception: exception);
+                }
+            }
+
+            return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions.Distinct(new CurrencyConversionEqualityComparer()).ToList());
         }
 
         /// <summary>
@@ -118,7 +140,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 
             try
             {
-                string requestUrl = $"{apiUrl}latest?access_key={accessKey}";
+                string requestUrl = $"{apiUrl}latest?access_key={accessKey}&symbols={string.Join(",", this.GetAvailableCurrencies())}";
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUrl);
                 request.ContentType = "application/json; charset=utf-8";

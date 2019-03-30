@@ -29,11 +29,14 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
     using System.Configuration;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Reflection;
 
     using EPiServer.Logging;
     using EPiServer.ServiceLocation;
+
+    using Mediachase.Commerce.Markets;
 
     using Newtonsoft.Json;
 
@@ -45,9 +48,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
     {
         private const string FailMessage = "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer";
 
+        private const string ConvertMessage = "[Exchange Rates : CurrencyLayer] Error converting exchange rate from fixer.io";
+
         private const string KeyMissingMessage = "[Exchange Rates : CurrencyLayer] Access key not configured";
 
         private const string UrlMissingMessage = "[Exchange Rates : CurrencyLayer] Api Url not configured";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExchangeRateService"/> class.
+        /// </summary>
+        /// <param name="marketService">The market service.</param>
+        public ExchangeRateService(IMarketService marketService)
+            : base(marketService: marketService)
+        {
+        }
 
         /// <summary>
         /// Gets the exchange rates.
@@ -59,10 +73,11 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             messages = new List<string>();
             List<CurrencyConversion> currencyConversions = new List<CurrencyConversion>();
 
+            CurrencyLayerResponse currencyLayerResponse = this.GetCurrencyLayerResponse();
+            DateTime exchangeRateDate = UnixTimeStampToDateTime(unixTimeStamp: currencyLayerResponse.Timestamp);
+
             try
             {
-                CurrencyLayerResponse currencyLayerResponse = this.GetCurrencyLayerResponse();
-
                 if (!currencyLayerResponse.Success)
                 {
                     string failMessage = string.Format(
@@ -75,7 +90,10 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                     return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
                 }
 
-                DateTime exchangeRateDate = UnixTimeStampToDateTime(unixTimeStamp: currencyLayerResponse.Timestamp);
+                if (currencyLayerResponse.Quotes == null)
+                {
+                    return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
+                }
 
                 currencyConversions.Add(
                     new CurrencyConversion(
@@ -83,12 +101,25 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                         name: this.GetCurrencyName(isoCurrencySymbol: currencyLayerResponse.BaseCurrency),
                         factor: 1m,
                         updated: exchangeRateDate));
+            }
+            catch (Exception exception)
+            {
+                messages.Add(item: FailMessage);
+                this.log.Error(message: FailMessage, exception: exception);
+            }
 
+            try
+            {
                 foreach (PropertyInfo propertyInfo in typeof(Quotes).GetProperties())
                 {
                     string currencyCode = propertyInfo.Name.Substring(3);
                     string currencyName = this.GetCurrencyName(isoCurrencySymbol: currencyCode);
                     float exchangeRate = (float)currencyLayerResponse.Quotes.GetType().GetProperty(name: propertyInfo.Name).GetValue(obj: currencyLayerResponse.Quotes, index: null);
+
+                    if (exchangeRate.Equals(0))
+                    {
+                        continue;
+                    }
 
                     CurrencyConversion currencyConversion = new CurrencyConversion(
                         currency: currencyCode,
@@ -101,11 +132,10 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             }
             catch (Exception exception)
             {
-                messages.Add(item: FailMessage);
-                this.log.Error(message: FailMessage, exception: exception);
+                this.log.Error(message: ConvertMessage, exception: exception);
             }
 
-            return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
+            return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions.Distinct(new CurrencyConversionEqualityComparer()).ToList());
         }
 
         /// <summary>
@@ -146,7 +176,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 
             try
             {
-                string requestUrl = $"{apiUrl}live?access_key={accessKey}&source=USD";
+                string requestUrl = $"{apiUrl}live?access_key={accessKey}&currencies={string.Join(",", this.GetAvailableCurrencies())}";
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUriString: requestUrl);
                 request.Method = WebRequestMethods.Http.Get;

@@ -31,22 +31,32 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
     using EPiServer.Logging;
 
+    using Mediachase.Commerce;
+    using Mediachase.Commerce.Markets;
+
     /// <summary>
     ///     Class ExchangeRateServiceBase.
     /// </summary>
     public abstract class ExchangeRateServiceBase : IExchangeRateService
     {
         /// <summary>
-        ///     The log
+        ///     The <see cref="IMarketService"/> instance.
+        /// </summary>
+        protected IMarketService marketService;
+
+        /// <summary>
+        ///     The <see cref="ILogger"/> instance.
         /// </summary>
         protected ILogger log = LogManager.GetLogger();
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="ExchangeRateServiceBase" /> class.
+        /// Initializes a new instance of the <see cref="ExchangeRateServiceBase" /> class.
         /// </summary>
-        protected ExchangeRateServiceBase()
+        /// <param name="marketService">The market service.</param>
+        protected ExchangeRateServiceBase(IMarketService marketService)
         {
             this.RegionsInfo = this.GetRegions();
+            this.marketService = marketService;
         }
 
         /// <summary>
@@ -74,6 +84,21 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     comparisonType: StringComparison.OrdinalIgnoreCase));
 
             return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyEnglishName;
+        }
+
+        /// <summary>Gets the available currency codes.</summary>
+        /// <returns>A <see cref="List{T}"/> of currency codes.</returns>
+        protected ReadOnlyCollection<string> GetAvailableCurrencies()
+        {
+            List<IMarket> markets = this.marketService.GetAllMarkets().ToList();
+            List<string> usedCurrencies = new List<string>();
+
+            foreach (IMarket market in markets)
+            {
+                usedCurrencies.AddRange(market.Currencies.Select(marketCurrency => marketCurrency.CurrencyCode));
+            }
+
+            return new ReadOnlyCollection<string>(usedCurrencies.Distinct().ToList());
         }
 
         /// <summary>
