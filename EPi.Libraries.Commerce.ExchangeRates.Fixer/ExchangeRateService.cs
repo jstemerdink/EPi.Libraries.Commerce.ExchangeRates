@@ -26,19 +26,26 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Configuration;
     using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Reflection;
+    using System.Text;
 
     using EPiServer.Logging;
     using EPiServer.ServiceLocation;
 
     using Mediachase.Commerce.Markets;
 
+    using Microsoft.Extensions.Configuration;
+
     using Newtonsoft.Json;
+    using static System.Net.Mime.MediaTypeNames;
+
+    using ConfigurationManager = System.Configuration.ConfigurationManager;
 
     /// <summary>
     ///     Class ExchangeRateService.
@@ -55,11 +62,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         private const string UrlMissingMessage = "[Exchange Rates : Fixer] Api Url not configured";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExchangeRateService"/> class.
+        /// Initializes a new instance of the <see cref="ExchangeRateService" /> class.
         /// </summary>
         /// <param name="marketService">The market service.</param>
-        public ExchangeRateService(IMarketService marketService)
-            : base(marketService: marketService)
+        /// <param name="configuration">The configuration.</param>
+        public ExchangeRateService(IMarketService marketService, IConfiguration configuration)
+            : base(marketService: marketService, configuration)
         {
         }
 
@@ -83,7 +91,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             catch (Exception exception)
             {
                 messages.Add(item: FailMessage);
-                this.log.Error(message: FailMessage, exception: exception);
+                this.Log.Error(message: FailMessage, exception: exception);
                 return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
             }
 
@@ -110,7 +118,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                 }
                 catch (Exception exception)
                 {
-                    this.log.Error(message: ConvertMessage, exception: exception);
+                    this.Log.Error(message: ConvertMessage, exception: exception);
                 }
             }
 
@@ -125,46 +133,45 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         {
             string jsonResponse = string.Empty;
 
-            string accessKey = ConfigurationManager.AppSettings["exchangerates.fixer.accesskey"];
-            string apiUrl = ConfigurationManager.AppSettings["exchangerates.fixer.apiurl"];
+            string accessKey = this.Configuration.GetValue<string>("exchangerates.fixer.accesskey");
+            string apiUrl = this.Configuration.GetValue<string>("exchangerates.fixer.apiurl");
 
             if (string.IsNullOrWhiteSpace(value: accessKey))
             {
-                this.log.Error(message: KeyMissingMessage);
+                this.Log.Error(message: KeyMissingMessage);
             }
 
             if (string.IsNullOrWhiteSpace(value: apiUrl))
             {
-                this.log.Error(message: UrlMissingMessage);
+                this.Log.Error(message: UrlMissingMessage);
             }
 
             try
             {
                 string requestUrl = $"{apiUrl}latest?access_key={accessKey}&symbols={string.Join(",", this.GetAvailableCurrencies())}";
 
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUrl);
-                request.ContentType = "application/json; charset=utf-8";
-                request.Method = WebRequestMethods.Http.Get;
-                request.Accept = "application/json";
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
 
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Stream responseStream = response.GetResponseStream();
+                HttpResponseMessage response = Client.SendAsync(request).Result;
 
-                if (responseStream == null)
+                response.EnsureSuccessStatusCode();
+
+                string responseBody = response.Content.ReadAsStringAsync().Result;
+
+                if (string.IsNullOrWhiteSpace(responseBody))
                 {
-                    this.log.Error(message: FailMessage);
+                    this.Log.Error(message: FailMessage);
                     return JsonConvert.DeserializeObject<FixerResponse>(value: jsonResponse);
                 }
 
-                using (StreamReader streamReader = new StreamReader(stream: responseStream))
-                {
-                    jsonResponse = streamReader.ReadToEnd();
-                }
+                jsonResponse = responseBody;
             }
             catch (Exception exception)
             {
-                this.log.Error(message: FailMessage, exception: exception);
-                this.log.Debug("[Exchange Rates : Fixer] JSON response: {0}", jsonResponse);
+                this.Log.Error(message: FailMessage, exception: exception);
+                this.Log.Debug("[Exchange Rates : Fixer] JSON response: {0}", jsonResponse);
             }
 
             return JsonConvert.DeserializeObject<FixerResponse>(value: jsonResponse);

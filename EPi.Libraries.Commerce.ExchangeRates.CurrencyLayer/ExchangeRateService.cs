@@ -26,17 +26,19 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Configuration;
     using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
     using System.Reflection;
 
     using EPiServer.Logging;
     using EPiServer.ServiceLocation;
 
     using Mediachase.Commerce.Markets;
+
+    using Microsoft.Extensions.Configuration;
 
     using Newtonsoft.Json;
 
@@ -55,11 +57,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
         private const string UrlMissingMessage = "[Exchange Rates : CurrencyLayer] Api Url not configured";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExchangeRateService"/> class.
+        /// Initializes a new instance of the <see cref="ExchangeRateService" /> class.
         /// </summary>
         /// <param name="marketService">The market service.</param>
-        public ExchangeRateService(IMarketService marketService)
-            : base(marketService: marketService)
+        /// <param name="configuration">The configuration.</param>
+        public ExchangeRateService(IMarketService marketService, IConfiguration configuration)
+            : base(marketService: marketService, configuration)
         {
         }
 
@@ -86,7 +89,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                         arg0: currencyLayerResponse.Error.Info);
 
                     messages.Add(item: failMessage);
-                    this.log.Error(message: failMessage);
+                    this.Log.Error(message: failMessage);
                     return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
                 }
 
@@ -105,7 +108,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             catch (Exception exception)
             {
                 messages.Add(item: FailMessage);
-                this.log.Error(message: FailMessage, exception: exception);
+                this.Log.Error(message: FailMessage, exception: exception);
             }
 
             try
@@ -132,7 +135,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             }
             catch (Exception exception)
             {
-                this.log.Error(message: ConvertMessage, exception: exception);
+                this.Log.Error(message: ConvertMessage, exception: exception);
             }
 
             return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions.Distinct(new CurrencyConversionEqualityComparer()).ToList());
@@ -159,18 +162,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
         {
             string jsonResponse = string.Empty;
 
-            string accessKey = ConfigurationManager.AppSettings["exchangerates.currencylayer.accesskey"];
-            string apiUrl = ConfigurationManager.AppSettings["exchangerates.currencylayer.apiurl"];
+            string accessKey = this.Configuration.GetValue<string>("exchangerates.currencylayer.accesskey");
+            string apiUrl = this.Configuration.GetValue<string>("exchangerates.currencylayer.apiurl");
+
+
 
             if (string.IsNullOrWhiteSpace(value: accessKey))
             {
-                this.log.Error(message: KeyMissingMessage);
+                this.Log.Error(message: KeyMissingMessage);
                 return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
             }
 
             if (string.IsNullOrWhiteSpace(value: apiUrl))
             {
-                this.log.Error(message: UrlMissingMessage);
+                this.Log.Error(message: UrlMissingMessage);
                 return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
             }
 
@@ -178,27 +183,23 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             {
                 string requestUrl = $"{apiUrl}live?access_key={accessKey}&currencies={string.Join(",", this.GetAvailableCurrencies())}";
 
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUriString: requestUrl);
-                request.Method = WebRequestMethods.Http.Get;
+                HttpResponseMessage response = Client.GetAsync(requestUrl).Result;
+                response.EnsureSuccessStatusCode();
 
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Stream responseStream = response.GetResponseStream();
+                string responseBody = response.Content.ReadAsStringAsync().Result;
 
-                if (responseStream == null)
+                if (string.IsNullOrWhiteSpace(responseBody))
                 {
-                    this.log.Error(message: FailMessage);
+                    this.Log.Error(message: FailMessage);
                     return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
                 }
 
-                using (StreamReader streamReader = new StreamReader(stream: responseStream))
-                {
-                    jsonResponse = streamReader.ReadToEnd();
-                }
+                jsonResponse = responseBody;
             }
             catch (Exception exception)
             {
-                this.log.Error(message: FailMessage, exception: exception);
-                this.log.Debug("[Exchange Rates : CurrencyLayer] JSON response: {0}", jsonResponse);
+                this.Log.Error(message: FailMessage, exception: exception);
+                this.Log.Debug("[Exchange Rates : CurrencyLayer] JSON response: {0}", jsonResponse);
             }
 
             return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);

@@ -1,36 +1,38 @@
 version: 1.0.{build}
-image: Visual Studio 2017
+image: Visual Studio 2022
 configuration: Release
 environment:
-  github_token: 'secure: TaDEavUfTj6EgwcO7y5njQVS5Z9bBU/fVFuSApo5XEO6FSBT5UzJQmyJjbhIFDZb'
+  github_token: 'secure: zuJGSRrCtrCyD+zy7ZNSoSW7XRq8fYp8ouAyCNHCL5I78Rg+rRU9OsOynyHCJqaS'
   myget_token: 'secure: 9Z+KYPk2hI7hg9kYLv/N13fvoqcYCP96isNUkRrKu0v87cw85H62oe/DCwpqvBXF'
   app_config:
     secure: XbnOIy6gwKLjvlNDjLRGepn9JsztX4v0d6p/FqvIaU78rQ72fkG507sJ41Bk0uwmbl1IVJ396ilCb+5W4pRSCw==
+init:
+  - set PATH=C:\Program Files\Java\jdk15\bin;%PATH%
+  - set JAVA_HOME_11_X64=C:\Program Files\Java\jdk15
+  - set JAVA_HOME=C:\Program Files\Java\jdk15
 install:
-- choco install gitversion.portable -pre -y
-- choco install "msbuild-sonarqube-runner" -y
-- cmd: nuget sources add -Name EPiServerFeed -Source http://nuget.episerver.com/feed/packages.svc/
+- ps: dotnet tool install --global GitVersion.Tool --version 5.*
+- ps: dotnet tool install --global dotnet-sonarscanner
+- cmd: nuget sources add -Name EPiServerFeed -Source https://nuget.episerver.com/feed/packages.svc/
 - ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
-- cmd: appveyor-tools\secure-file -decrypt EPi.Libraries.Commerce.ExchangeRates.Tests\app.config.enc -secret %app_config%
+- cmd: appveyor-tools\secure-file -decrypt EPi.Libraries.Commerce.ExchangeRates.Tests\appsettings.json.enc -secret %app_config%
 before_build:
 - cmd: nuget restore
-- ps: gitversion /l console /output buildserver /updateAssemblyInfo
-build_script:
-  - SonarScanner.MSBuild.exe begin /k:"jstemerdink:EPi.Libraries.Commerce.ExchangeRates" /n:"EPi.Libraries.Commerce.ExchangeRates" /d:"sonar.host.url=https://sonarcloud.io" /o:"jstemerdink-github" /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
-  - msbuild "EPi.Libraries.Commerce.ExchangeRates.sln"
-  - SonarScanner.MSBuild.exe end /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
+- ps: dotnet-gitversion /l console /output buildserver
+build_script:  
+  - dotnet sonarscanner begin /k:"jstemerdink:EPi.Libraries.Commerce.ExchangeRatesh" /n:"EPi.Libraries.Commerce.ExchangeRates" /d:"sonar.host.url=https://sonarcloud.io" /o:"jstemerdink-github" /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
+  - dotnet build "EPi.Libraries.Commerce.ExchangeRates.sln" --no-restore -c Release -p:Version=%GitVersion_MajorMinorPatch% -p:AssemblyVersion=%GitVersion_AssemblySemVer% -p:FileVersion=%GitVersion_AssemblySemFileVer% -p:ProductVersion=%GitVersion_MajorMinorPatch%
+  - dotnet pack "EPi.Libraries.Commerce.ExchangeRates.sln" --no-build -c Release -p:PackageVersion=%GitVersion_NuGetVersion%
+  - dotnet sonarscanner end /d:"sonar.login=0b0eec6902ab7d776899f79bfeff15d313dd6e09"
 after_build:
-- cmd: nuget pack EPi.Libraries.Commerce.ExchangeRates\EPi.Libraries.Commerce.ExchangeRates.csproj -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
-- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.nupkg"
-- cmd: nuget pack EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.csproj -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
-- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.nupkg"
-- cmd: nuget pack EPi.Libraries.Commerce.ExchangeRates.Fixer\EPi.Libraries.Commerce.ExchangeRates.Fixer.csproj -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
-- cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.nupkg"
-- 7z a EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates\bin\Release\EPi.Libraries.Commerce.ExchangeRates.dll
+- cmd: appveyor PushArtifact "%APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates\bin\Release\EPi.Libraries.Localization.%GitVersion_NuGetVersion%.nupkg"
+- cmd: appveyor PushArtifact "%APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.nupkg"
+- cmd: appveyor PushArtifact "%APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.Fixer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.nupkg"
+- 7z a EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates\bin\Release\*\*.dll 
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.%GitVersion_NuGetVersion%.zip"
-- 7z a EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.dll
+- 7z a EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer\bin\Release\*\*.dll
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer.%GitVersion_NuGetVersion%.zip"
-- 7z a EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.Fixer\bin\Release\EPi.Libraries.Commerce.ExchangeRates.Fixer.dll
+- 7z a EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.zip %APPVEYOR_BUILD_FOLDER%\EPi.Libraries.Commerce.ExchangeRates.Fixer\bin\Release\*\*.dll
 - cmd: appveyor PushArtifact "EPi.Libraries.Commerce.ExchangeRates.Fixer.%GitVersion_NuGetVersion%.zip"
 before_package:
 - ps: >-
@@ -48,7 +50,7 @@ deploy:
     branch: develop             # release from develop branch only
 - provider: GitHub
   auth_token:
-    secure: TaDEavUfTj6EgwcO7y5njQVS5Z9bBU/fVFuSApo5XEO6FSBT5UzJQmyJjbhIFDZb
+    secure: zuJGSRrCtrCyD+zy7ZNSoSW7XRq8fYp8ouAyCNHCL5I78Rg+rRU9OsOynyHCJqaS
   artifact: /.*\.zip/
   on:
     branch: master              # release from master branch only

@@ -161,6 +161,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
                     if (existingRow != null)
                     {
+
                         existingRow.BeginEdit();
 
                         existingRow.AverageRate = rate;

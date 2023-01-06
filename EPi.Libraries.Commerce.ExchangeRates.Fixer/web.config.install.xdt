@@ -1,7 +1,0 @@
-﻿<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
-  <appSettings xdt:Transform="InsertIfMissing" />
-  <appSettings>
-    <add key="exchangerates.fixer.accesskey" value="" xdt:Transform="InsertIfMissing" xdt:Locator="Match(key)" />
-    <add key="exchangerates.fixer.accesskey" value="http://data.fixer.io/api/" xdt:Transform="InsertIfMissing" xdt:Locator="Match(key)" />
-  </appSettings>
-</configuration>

@@ -1,5 +1,3 @@
-﻿The following keys have been added to you appSettings: 
+﻿The following keys need to be  added to your appsettings.json: 
 - "exchangerates.fixer.accesskey"
 - "exchangerates.fixer.apiurl"
-
-Don't forget to add your access key from fixer.io

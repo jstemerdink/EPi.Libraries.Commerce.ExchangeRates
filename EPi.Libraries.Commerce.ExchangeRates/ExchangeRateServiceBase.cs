@@ -28,11 +28,14 @@ namespace EPi.Libraries.Commerce.ExchangeRates
     using System.Collections.ObjectModel;
     using System.Globalization;
     using System.Linq;
+    using System.Net.Http;
 
     using EPiServer.Logging;
 
     using Mediachase.Commerce;
     using Mediachase.Commerce.Markets;
+
+    using Microsoft.Extensions.Configuration;
 
     /// <summary>
     ///     Class ExchangeRateServiceBase.
@@ -40,23 +43,36 @@ namespace EPi.Libraries.Commerce.ExchangeRates
     public abstract class ExchangeRateServiceBase : IExchangeRateService
     {
         /// <summary>
+        /// A Http Client Instance
+        /// </summary>
+        /// <remarks>HttpClient is intended to be instantiated once per application, rather than per-use. But as we don't know if there's one we need to create one</remarks>
+        protected static readonly HttpClient Client = new HttpClient();
+
+        /// <summary>
         ///     The <see cref="IMarketService"/> instance.
         /// </summary>
-        protected IMarketService marketService;
+        protected IMarketService MarketService;
 
         /// <summary>
         ///     The <see cref="ILogger"/> instance.
         /// </summary>
-        protected ILogger log = LogManager.GetLogger();
+        protected ILogger Log = LogManager.GetLogger();
+        
+        /// <summary>
+        /// The configuration
+        /// </summary>
+        protected IConfiguration Configuration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExchangeRateServiceBase" /> class.
         /// </summary>
         /// <param name="marketService">The market service.</param>
-        protected ExchangeRateServiceBase(IMarketService marketService)
+        /// <param name="configuration">The configuration.</param>
+        protected ExchangeRateServiceBase(IMarketService marketService, IConfiguration configuration)
         {
             this.RegionsInfo = this.GetRegions();
-            this.marketService = marketService;
+            this.MarketService = marketService;
+            this.Configuration = configuration;
         }
 
         /// <summary>
@@ -90,7 +106,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <returns>A <see cref="List{T}"/> of currency codes.</returns>
         protected ReadOnlyCollection<string> GetAvailableCurrencies()
         {
-            List<IMarket> markets = this.marketService.GetAllMarkets().ToList();
+            List<IMarket> markets = this.MarketService.GetAllMarkets().ToList();
             List<string> usedCurrencies = new List<string>();
 
             foreach (IMarket market in markets)
@@ -116,7 +132,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             }
             catch (ArgumentOutOfRangeException argumentOutOfRangeException)
             {
-                this.log.Error(
+                this.Log.Error(
                     "[Exchange Rates : Service] Error getting culture info",
                     exception: argumentOutOfRangeException);
                 return new ReadOnlyCollection<RegionInfo>(list: regions);
@@ -139,7 +155,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                 }
                 catch (ArgumentException argumentException)
                 {
-                    this.log.Error(
+                    this.Log.Error(
                         "[Exchange Rates : Service] Error adding region info for: {0}",
                         culture.EnglishName,
                         argumentException);
