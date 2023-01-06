@@ -4,8 +4,10 @@ configuration: Release
 environment:
   github_token: 'secure: zuJGSRrCtrCyD+zy7ZNSoSW7XRq8fYp8ouAyCNHCL5I78Rg+rRU9OsOynyHCJqaS'
   myget_token: 'secure: 9Z+KYPk2hI7hg9kYLv/N13fvoqcYCP96isNUkRrKu0v87cw85H62oe/DCwpqvBXF'
-  app_config:
-    secure: XbnOIy6gwKLjvlNDjLRGepn9JsztX4v0d6p/FqvIaU78rQ72fkG507sJ41Bk0uwmbl1IVJ396ilCb+5W4pRSCw==
+  app_settings_secret:
+    secure: sLmvbrRCLzpGAfj/DJQEGvRqAzhUdMSb19TKZtyEwnA=
+  app_settings_salt:
+    secure: Mkw6CVqXMcXRHvRBcEemGYSLrzx/ItAw/Fl29zNZs68=
 init:
   - set PATH=C:\Program Files\Java\jdk15\bin;%PATH%
   - set JAVA_HOME_11_X64=C:\Program Files\Java\jdk15
@@ -15,7 +17,7 @@ install:
 - ps: dotnet tool install --global dotnet-sonarscanner
 - cmd: nuget sources add -Name EPiServerFeed -Source https://nuget.episerver.com/feed/packages.svc/
 - ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
-- cmd: appveyor-tools\secure-file -decrypt EPi.Libraries.Commerce.ExchangeRates.Tests\appsettings.json.enc -secret %app_config%
+- cmd: appveyor-tools\secure-file -decrypt EPi.Libraries.Commerce.ExchangeRates.Tests\appsettings.json.enc -secret %app_settings_secret% -salt %app_settings_salt%
 before_build:
 - cmd: nuget restore
 - ps: dotnet-gitversion /l console /output buildserver
