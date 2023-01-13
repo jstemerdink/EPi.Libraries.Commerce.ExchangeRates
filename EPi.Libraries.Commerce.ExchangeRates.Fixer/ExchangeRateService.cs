@@ -26,6 +26,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Configuration;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -133,17 +134,27 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         {
             string jsonResponse = string.Empty;
 
-            string accessKey = this.Configuration.GetValue<string>("exchangerates.fixer.accesskey");
-            string apiUrl = this.Configuration.GetValue<string>("exchangerates.fixer.apiurl");
+            string accessKey = this.Configuration.GetValue<string>("ExchangeRates:Services:AccessKey");
+            string apiUrl = this.Configuration.GetValue<string>("ExchangeRates:Services:ApiUrl");
+
+            if (string.IsNullOrWhiteSpace(accessKey))
+            {
+                accessKey = this.Configuration.GetValue<string>("exchangerates.fixer.accesskey");
+            }
 
             if (string.IsNullOrWhiteSpace(value: accessKey))
             {
-                this.Log.Error(message: KeyMissingMessage);
+                throw new ConfigurationErrorsException(KeyMissingMessage);
+            }
+
+            if (string.IsNullOrWhiteSpace(apiUrl))
+            {
+                apiUrl = this.Configuration.GetValue<string>("exchangerates.fixer.apiurl");
             }
 
             if (string.IsNullOrWhiteSpace(value: apiUrl))
             {
-                this.Log.Error(message: UrlMissingMessage);
+                throw new ConfigurationErrorsException(UrlMissingMessage);
             }
 
             try

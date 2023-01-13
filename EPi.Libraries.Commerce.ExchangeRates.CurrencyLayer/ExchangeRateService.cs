@@ -26,6 +26,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Configuration;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -50,7 +51,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
     {
         private const string FailMessage = "[Exchange Rates : CurrencyLayer] Error retrieving exchange rates from CurrencyLayer";
 
-        private const string ConvertMessage = "[Exchange Rates : CurrencyLayer] Error converting exchange rate from fixer.io";
+        private const string ConvertMessage = "[Exchange Rates : CurrencyLayer] Error converting exchange rate from CurrencyLayer";
 
         private const string KeyMissingMessage = "[Exchange Rates : CurrencyLayer] Access key not configured";
 
@@ -162,21 +163,27 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
         {
             string jsonResponse = string.Empty;
 
-            string accessKey = this.Configuration.GetValue<string>("exchangerates.currencylayer.accesskey");
-            string apiUrl = this.Configuration.GetValue<string>("exchangerates.currencylayer.apiurl");
+            string accessKey = this.Configuration.GetValue<string>("ExchangeRates:Services:AccessKey");
+            string apiUrl = this.Configuration.GetValue<string>("ExchangeRates:Services:ApiUrl");
 
-
+            if (string.IsNullOrWhiteSpace(accessKey))
+            {
+                accessKey = this.Configuration.GetValue<string>("exchangerates.currencylayer.accesskey");
+            }
 
             if (string.IsNullOrWhiteSpace(value: accessKey))
             {
-                this.Log.Error(message: KeyMissingMessage);
-                return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
+                throw new ConfigurationErrorsException(KeyMissingMessage);
+            }
+
+            if (string.IsNullOrWhiteSpace(apiUrl))
+            {
+                apiUrl = this.Configuration.GetValue<string>("exchangerates.currencylayer.apiurl");
             }
 
             if (string.IsNullOrWhiteSpace(value: apiUrl))
             {
-                this.Log.Error(message: UrlMissingMessage);
-                return JsonConvert.DeserializeObject<CurrencyLayerResponse>(value: jsonResponse);
+                throw new ConfigurationErrorsException(UrlMissingMessage);
             }
 
             try
