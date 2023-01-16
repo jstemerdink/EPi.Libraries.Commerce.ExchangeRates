@@ -157,20 +157,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     CurrencyDto.CurrencyRow fromRow = GetCurrency(dto: dto, currencyCode: from.Currency);
                     CurrencyDto.CurrencyRow toRow = GetCurrency(dto: dto, currencyCode: to.Currency);
 
+                    if (fromRow.CurrencyId == toRow.CurrencyId)
+                    {
+                        continue;
+                    }
+
                     CurrencyDto.CurrencyRateRow existingRow = rates.Rows.Cast<CurrencyDto.CurrencyRateRow>()
                         .LastOrDefault(
                             row => row.FromCurrencyId == fromRow.CurrencyId && row.ToCurrencyId == toRow.CurrencyId);
-
+                    
                     if (existingRow != null)
                     {
                         rates.RemoveCurrencyRateRow(existingRow);
                         
                         this.log.Information($"[Exchange Rates : Job] Old exchange rate removed for {to.Name} : {to.Factor}");
-                    }
-
-                    if (fromRow.CurrencyId == toRow.CurrencyId)
-                    {
-                        continue;
                     }
 
                     rates.AddCurrencyRateRow(
