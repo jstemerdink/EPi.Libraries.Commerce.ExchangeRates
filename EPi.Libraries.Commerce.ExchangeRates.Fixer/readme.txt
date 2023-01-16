@@ -1,5 +1,12 @@
-﻿The following keys have been added to you appSettings: 
+﻿The following keys need to be  added to your appsettings.json: 
 - "exchangerates.fixer.accesskey"
 - "exchangerates.fixer.apiurl"
 
-Don't forget to add your access key from fixer.io
+or like this:
+
+"ExchangeRates": {
+  "Services": {
+    "AccessKey": "changeme.api-key",
+    "ApiUrl": "https://change.me/"
+  }
+}

@@ -31,14 +31,22 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Reflection;
+    using System.Text;
 
     using EPiServer.Logging;
     using EPiServer.ServiceLocation;
 
     using Mediachase.Commerce.Markets;
 
+    using Microsoft.Extensions.Configuration;
+
     using Newtonsoft.Json;
+    using static System.Net.Mime.MediaTypeNames;
+
+    using ConfigurationManager = System.Configuration.ConfigurationManager;
 
     /// <summary>
     ///     Class ExchangeRateService.
@@ -55,11 +63,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         private const string UrlMissingMessage = "[Exchange Rates : Fixer] Api Url not configured";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExchangeRateService"/> class.
+        /// Initializes a new instance of the <see cref="ExchangeRateService" /> class.
         /// </summary>
         /// <param name="marketService">The market service.</param>
-        public ExchangeRateService(IMarketService marketService)
-            : base(marketService: marketService)
+        /// <param name="configuration">The configuration.</param>
+        public ExchangeRateService(IMarketService marketService, IConfiguration configuration)
+            : base(marketService: marketService, configuration)
         {
         }
 
@@ -75,25 +84,49 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             List<CurrencyConversion> currencyConversions = new List<CurrencyConversion>();
 
             FixerResponse fixerResponse = this.GetFixerResponse();
+            DateTime exchangeRateDate = UnixTimeStampToDateTime(unixTimeStamp: fixerResponse.Timestamp);
 
             try
             {
-                currencyConversions.Add(new CurrencyConversion(currency: fixerResponse.BaseCurrency, name: this.GetCurrencyName(isoCurrencySymbol: fixerResponse.BaseCurrency), factor: 1m, updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture)));
+                currencyConversions.Add(
+                    new CurrencyConversion(
+                        currency: fixerResponse.BaseCurrency, 
+                        name: fixerResponse.BaseCurrency, 
+                        factor: 1m, 
+                        updated: exchangeRateDate));
             }
             catch (Exception exception)
             {
                 messages.Add(item: FailMessage);
-                this.log.Error(message: FailMessage, exception: exception);
+                this.Log.Error(message: FailMessage, exception: exception);
                 return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
             }
+
+            Type ratesType = fixerResponse.ExchangeRates.GetType();
 
             foreach (PropertyInfo propertyInfo in typeof(Rates).GetProperties())
             {
                 try
                 {
                     string currencyCode = propertyInfo.Name;
-                    string currencyName = this.GetCurrencyName(isoCurrencySymbol: propertyInfo.Name);
-                    float exchangeRate = (float)fixerResponse.ExchangeRates.GetType().GetProperty(name: propertyInfo.Name).GetValue(obj: fixerResponse.ExchangeRates, index: null);
+                    string currencyName = propertyInfo.Name;
+                    float exchangeRate = 0;
+
+                    if (string.IsNullOrWhiteSpace(currencyCode))
+                    {
+                        continue;
+                    }
+
+                    PropertyInfo property = ratesType?.GetProperty(name: currencyCode);
+                    object propertyValue = property?.GetValue(obj: fixerResponse.ExchangeRates, index: null);
+
+                    if (propertyValue == null)
+                    {
+                        continue;
+                    }
+
+                    exchangeRate = (float)propertyValue;
+                    
 
                     if (exchangeRate.Equals(0))
                     {
@@ -104,13 +137,13 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                         currency: currencyCode,
                         name: currencyName,
                         factor: Convert.ToDecimal(value: exchangeRate, provider: CultureInfo.CreateSpecificCulture("en-US")),
-                        updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture));
+                        updated: exchangeRateDate);
 
                     currencyConversions.Add(item: currencyConversion);
                 }
                 catch (Exception exception)
                 {
-                    this.log.Error(message: ConvertMessage, exception: exception);
+                    this.Log.Error(message: ConvertMessage, exception: exception);
                 }
             }
 
@@ -125,46 +158,55 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         {
             string jsonResponse = string.Empty;
 
-            string accessKey = ConfigurationManager.AppSettings["exchangerates.fixer.accesskey"];
-            string apiUrl = ConfigurationManager.AppSettings["exchangerates.fixer.apiurl"];
+            string accessKey = this.Configuration.GetValue<string>("ExchangeRates:Services:AccessKey");
+            string apiUrl = this.Configuration.GetValue<string>("ExchangeRates:Services:ApiUrl");
+
+            if (string.IsNullOrWhiteSpace(accessKey))
+            {
+                accessKey = this.Configuration.GetValue<string>("exchangerates.fixer.accesskey");
+            }
 
             if (string.IsNullOrWhiteSpace(value: accessKey))
             {
-                this.log.Error(message: KeyMissingMessage);
+                throw new ConfigurationErrorsException(KeyMissingMessage);
+            }
+
+            if (string.IsNullOrWhiteSpace(apiUrl))
+            {
+                apiUrl = this.Configuration.GetValue<string>("exchangerates.fixer.apiurl");
             }
 
             if (string.IsNullOrWhiteSpace(value: apiUrl))
             {
-                this.log.Error(message: UrlMissingMessage);
+                throw new ConfigurationErrorsException(UrlMissingMessage);
             }
 
             try
             {
                 string requestUrl = $"{apiUrl}latest?access_key={accessKey}&symbols={string.Join(",", this.GetAvailableCurrencies())}";
 
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUrl);
-                request.ContentType = "application/json; charset=utf-8";
-                request.Method = WebRequestMethods.Http.Get;
-                request.Accept = "application/json";
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
 
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Stream responseStream = response.GetResponseStream();
+                HttpResponseMessage response = Client.SendAsync(request).Result;
 
-                if (responseStream == null)
+                response.EnsureSuccessStatusCode();
+
+                string responseBody = response.Content.ReadAsStringAsync().Result;
+
+                if (string.IsNullOrWhiteSpace(responseBody))
                 {
-                    this.log.Error(message: FailMessage);
+                    this.Log.Error(message: FailMessage);
                     return JsonConvert.DeserializeObject<FixerResponse>(value: jsonResponse);
                 }
 
-                using (StreamReader streamReader = new StreamReader(stream: responseStream))
-                {
-                    jsonResponse = streamReader.ReadToEnd();
-                }
+                jsonResponse = responseBody;
             }
             catch (Exception exception)
             {
-                this.log.Error(message: FailMessage, exception: exception);
-                this.log.Debug("[Exchange Rates : Fixer] JSON response: {0}", jsonResponse);
+                this.Log.Error(message: FailMessage, exception: exception);
+                this.Log.Debug("[Exchange Rates : Fixer] JSON response: {0}", jsonResponse);
             }
 
             return JsonConvert.DeserializeObject<FixerResponse>(value: jsonResponse);

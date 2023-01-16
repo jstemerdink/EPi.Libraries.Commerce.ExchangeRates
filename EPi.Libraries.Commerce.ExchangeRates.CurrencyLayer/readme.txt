@@ -1,5 +1,13 @@
-﻿The following key has been added to you appSettings: 
+﻿The following keys need to be  added to your appsettings.json: 
 - "exchangerates.currencylayer.accesskey"
 - "exchangerates.currencylayer.apiurl"
 
-Don't forget to add your access key from currencylayer.com
+
+or like this:
+
+"ExchangeRates": {
+  "Services": {
+    "AccessKey": "changeme.api-key",
+    "ApiUrl": "https://change.me/"
+  }
+}

@@ -31,8 +31,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
     using Mediachase.Commerce;
     using Mediachase.Commerce.Markets;
 
-    using Moq;
+    using Microsoft.Extensions.Configuration;
 
+    using Moq;
     using NUnit.Framework;
 
     [TestFixture]
@@ -42,6 +43,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
 
         private Mock<IMarketService> marketServiceMock;
         private Mock<IMarket> marketMock;
+
+        private IConfiguration configuration;
 
         [Test]
         public void GetCurrencyLayerExchangeRates_StateUnderTest_ExpectedBehavior()
@@ -83,6 +86,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
             this.marketMock.Setup(x => x.Currencies).Returns(() => new[] { new Currency("USD"), new Currency("SEK"), new Currency("EUR") });
 
             this.marketServiceMock.Setup(x => x.GetAllMarkets()).Returns(new List<IMarket>() { this.marketMock.Object });
+
+            this.configuration = InitConfiguration();
         }
 
         [TearDown]
@@ -91,14 +96,24 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
             this.mockRepository.VerifyAll();
         }
 
+        public static IConfiguration InitConfiguration()
+        {
+            IConfigurationRoot config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .AddEnvironmentVariables()
+                .Build();
+
+            return config;
+        }
+
         private IExchangeRateService CreateCurrencyLayerService()
         {
-            return new CurrencyLayer.ExchangeRateService(this.marketServiceMock.Object);
+            return new CurrencyLayer.ExchangeRateService(this.marketServiceMock.Object, this.configuration);
         }
 
         private IExchangeRateService CreateFixerService()
         {
-            return new Fixer.ExchangeRateService(this.marketServiceMock.Object);
+            return new Fixer.ExchangeRateService(this.marketServiceMock.Object, this.configuration);
         }
     }
 }
