@@ -4,4 +4,6 @@ the provider for currencylayer.com in EPi.Libraries.Commerce.ExchangeRates.Curre
 In that case you will need to implement IExchangeRateService and add the following attribute to your class  
 [ServiceConfiguration(typeof(IExchangeRateService), Lifecycle = ServiceInstanceScope.Singleton)]
 
+or register it in your startup class.
+
 You can uses the base class ExchangeRateServiceBase for the service. It will give you some extra functionality, like getting the name for the currency.

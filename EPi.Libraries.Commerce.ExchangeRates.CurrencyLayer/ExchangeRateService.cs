@@ -114,11 +114,29 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 
             try
             {
+                Type ratesType = currencyLayerResponse?.Quotes?.GetType();
+
                 foreach (PropertyInfo propertyInfo in typeof(Quotes).GetProperties())
                 {
                     string currencyCode = propertyInfo.Name.Substring(3);
                     string currencyName = currencyCode;
-                    float exchangeRate = (float)currencyLayerResponse.Quotes.GetType().GetProperty(name: propertyInfo.Name).GetValue(obj: currencyLayerResponse.Quotes, index: null);
+
+                    float exchangeRate = 0;
+
+                    if (string.IsNullOrWhiteSpace(currencyCode))
+                    {
+                        continue;
+                    }
+
+                    PropertyInfo property = ratesType?.GetProperty(name: currencyCode);
+                    object propertyValue = property?.GetValue(obj: currencyLayerResponse.Quotes, index: null);
+
+                    if (propertyValue == null)
+                    {
+                        continue;
+                    }
+
+                    exchangeRate = (float)propertyValue;
 
                     if (exchangeRate.Equals(0))
                     {

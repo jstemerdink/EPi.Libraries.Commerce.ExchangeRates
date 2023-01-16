@@ -91,7 +91,6 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                 currencyConversions.Add(
                     new CurrencyConversion(
                         currency: fixerResponse.BaseCurrency, 
-                        ////name: this.GetCurrencyName(isoCurrencySymbol: fixerResponse.BaseCurrency), 
                         name: fixerResponse.BaseCurrency, 
                         factor: 1m, 
                         updated: exchangeRateDate));
