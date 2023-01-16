@@ -153,3 +153,8 @@ $RECYCLE.BIN/
 .vs/
 *.orig
 EPi.Libraries.Commerce.ExchangeRates.Tests/app.config
+EPi.Libraries.Commerce.ExchangeRates.Tests/appsettings.json
+EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer/modules/
+EPi.Libraries.Commerce.ExchangeRates.Fixer/modules/
+EPi.Libraries.Commerce.ExchangeRates.Tests/modules/
+EPi.Libraries.Commerce.ExchangeRates/modules/
