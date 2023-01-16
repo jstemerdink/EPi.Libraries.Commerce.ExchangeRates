@@ -31,6 +31,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     public class FixerResponse
     {
         /// <summary>
+        /// Gets or sets a value indicating whether this <see cref="FixerResponse"/> is success.
+        /// </summary>
+        /// <value><c>true</c> if success; otherwise, <c>false</c>.</value>
+        [JsonProperty("success")]
+        public bool Success { get; set; }
+
+        /// <summary>
+        /// Gets or sets the timestamp.
+        /// </summary>
+        /// <value>The timestamp.</value>
+        [JsonProperty("timestamp")]
+        public float Timestamp { get; set; }
+
+        /// <summary>
         ///     Gets or sets the base currency.
         /// </summary>
         /// <value>The base currency.</value>

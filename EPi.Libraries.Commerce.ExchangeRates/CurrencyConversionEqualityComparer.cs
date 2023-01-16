@@ -57,7 +57,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <exception cref="T:System.OverflowException"><paramref name="obj" /> is less than <see cref="F:System.Int32.MinValue" /> or greater than <see cref="F:System.Int32.MaxValue" />.</exception>
         public int GetHashCode(CurrencyConversion obj)
         {
-            return obj.Currency.GetHashCode() + decimal.ToInt32(d: obj.Factor);
+            int currencyHashCode = !string.IsNullOrWhiteSpace(obj?.Currency) ? obj.Currency.GetHashCode() : 0;
+            return currencyHashCode + decimal.ToInt32(d: obj.Factor);
         }
     }
 }

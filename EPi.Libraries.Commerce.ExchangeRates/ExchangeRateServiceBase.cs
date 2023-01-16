@@ -70,15 +70,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <param name="configuration">The configuration.</param>
         protected ExchangeRateServiceBase(IMarketService marketService, IConfiguration configuration)
         {
-            this.RegionsInfo = this.GetRegions();
             this.MarketService = marketService;
             this.Configuration = configuration;
         }
-
-        /// <summary>
-        ///     Gets the regions infos
-        /// </summary>
-        private ReadOnlyCollection<RegionInfo> RegionsInfo { get; }
 
         /// <summary>
         ///     Gets the exchange rates.
@@ -86,21 +80,6 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// /// <param name="messages">A <see cref="List{T}"/> of messages.</param>
         /// <returns>A <see cref="ReadOnlyCollection{T}"/> of <see cref="CurrencyConversion"/>.</returns>
         public abstract ReadOnlyCollection<CurrencyConversion> GetExchangeRates(out List<string> messages);
-
-        /// <summary>
-        ///     Gets the name of the currency.
-        /// </summary>
-        /// <param name="isoCurrencySymbol">The ISO currency symbol.</param>
-        /// <returns>The currency name.</returns>
-        protected string GetCurrencyName(string isoCurrencySymbol)
-        {
-            RegionInfo currencyRegion = this.RegionsInfo.FirstOrDefault(
-                r => r.ISOCurrencySymbol.Equals(
-                    value: isoCurrencySymbol,
-                    comparisonType: StringComparison.OrdinalIgnoreCase));
-
-            return currencyRegion == null ? isoCurrencySymbol : currencyRegion.CurrencyEnglishName;
-        }
 
         /// <summary>Gets the available currency codes.</summary>
         /// <returns>A <see cref="List{T}"/> of currency codes.</returns>
@@ -118,51 +97,25 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         }
 
         /// <summary>
-        ///     Gets the regions.
+        /// Convert the Unix time stamp to a <see cref="DateTime"/>.
         /// </summary>
-        /// <returns>A <see cref="ReadOnlyCollection{T}"/> of <see cref="RegionInfo"/>.</returns>
-        private ReadOnlyCollection<RegionInfo> GetRegions()
+        /// <param name="unixTimeStamp">The unix time stamp.</param>
+        /// <returns>A <see cref="DateTime"/>.</returns>
+        protected DateTime UnixTimeStampToDateTime(float unixTimeStamp)
         {
-            List<RegionInfo> regions = new List<RegionInfo>();
-            CultureInfo[] cultures;
-
+            // Unix timestamp is seconds past epoch
             try
             {
-                cultures = CultureInfo.GetCultures(types: CultureTypes.AllCultures);
+                DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, kind: DateTimeKind.Utc);
+                dtDateTime = dtDateTime.AddSeconds(value: unixTimeStamp).ToLocalTime();
+                return dtDateTime;
             }
-            catch (ArgumentOutOfRangeException argumentOutOfRangeException)
+            catch (Exception exception)
             {
-                this.Log.Error(
-                    "[Exchange Rates : Service] Error getting culture info",
-                    exception: argumentOutOfRangeException);
-                return new ReadOnlyCollection<RegionInfo>(list: regions);
+                this.Log.Debug("[Exchange Rates : Service] Error getting timestamp", exception);
             }
 
-            // loop through all the cultures found
-            foreach (CultureInfo culture in cultures)
-            {
-                // pass the current culture's Locale ID (http://msdn.microsoft.com/en-us/library/0h88fahh.aspx)
-                // to the RegionInfo constructor to gain access to the information for that culture
-                try
-                {
-                    if (culture.IsNeutralCulture)
-                    {
-                        continue;
-                    }
-
-                    RegionInfo region = new RegionInfo(culture: culture.LCID);
-                    regions.Add(item: region);
-                }
-                catch (ArgumentException argumentException)
-                {
-                    this.Log.Error(
-                        "[Exchange Rates : Service] Error adding region info for: {0}",
-                        culture.EnglishName,
-                        argumentException);
-                }
-            }
-
-            return new ReadOnlyCollection<RegionInfo>(list: regions);
+            return DateTime.Now.ToLocalTime();
         }
     }
 }

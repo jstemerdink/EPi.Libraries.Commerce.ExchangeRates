@@ -84,10 +84,17 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             List<CurrencyConversion> currencyConversions = new List<CurrencyConversion>();
 
             FixerResponse fixerResponse = this.GetFixerResponse();
+            DateTime exchangeRateDate = UnixTimeStampToDateTime(unixTimeStamp: fixerResponse.Timestamp);
 
             try
             {
-                currencyConversions.Add(new CurrencyConversion(currency: fixerResponse.BaseCurrency, name: this.GetCurrencyName(isoCurrencySymbol: fixerResponse.BaseCurrency), factor: 1m, updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture)));
+                currencyConversions.Add(
+                    new CurrencyConversion(
+                        currency: fixerResponse.BaseCurrency, 
+                        ////name: this.GetCurrencyName(isoCurrencySymbol: fixerResponse.BaseCurrency), 
+                        name: fixerResponse.BaseCurrency, 
+                        factor: 1m, 
+                        updated: exchangeRateDate));
             }
             catch (Exception exception)
             {
@@ -96,13 +103,31 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                 return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
             }
 
+            Type ratesType = fixerResponse.ExchangeRates.GetType();
+
             foreach (PropertyInfo propertyInfo in typeof(Rates).GetProperties())
             {
                 try
                 {
                     string currencyCode = propertyInfo.Name;
-                    string currencyName = this.GetCurrencyName(isoCurrencySymbol: propertyInfo.Name);
-                    float exchangeRate = (float)fixerResponse.ExchangeRates.GetType().GetProperty(name: propertyInfo.Name).GetValue(obj: fixerResponse.ExchangeRates, index: null);
+                    string currencyName = propertyInfo.Name;
+                    float exchangeRate = 0;
+
+                    if (string.IsNullOrWhiteSpace(currencyCode))
+                    {
+                        continue;
+                    }
+
+                    PropertyInfo property = ratesType?.GetProperty(name: currencyCode);
+                    object propertyValue = property?.GetValue(obj: fixerResponse.ExchangeRates, index: null);
+
+                    if (propertyValue == null)
+                    {
+                        continue;
+                    }
+
+                    exchangeRate = (float)propertyValue;
+                    
 
                     if (exchangeRate.Equals(0))
                     {
@@ -113,7 +138,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                         currency: currencyCode,
                         name: currencyName,
                         factor: Convert.ToDecimal(value: exchangeRate, provider: CultureInfo.CreateSpecificCulture("en-US")),
-                        updated: DateTime.ParseExact(s: fixerResponse.ImportDate, format: "yyyy-MM-dd", provider: CultureInfo.InvariantCulture));
+                        updated: exchangeRateDate);
 
                     currencyConversions.Add(item: currencyConversion);
                 }

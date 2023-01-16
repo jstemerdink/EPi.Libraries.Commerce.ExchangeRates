@@ -102,7 +102,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                 currencyConversions.Add(
                     new CurrencyConversion(
                         currency: currencyLayerResponse.BaseCurrency,
-                        name: this.GetCurrencyName(isoCurrencySymbol: currencyLayerResponse.BaseCurrency),
+                        name: currencyLayerResponse.BaseCurrency,
                         factor: 1m,
                         updated: exchangeRateDate));
             }
@@ -117,7 +117,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                 foreach (PropertyInfo propertyInfo in typeof(Quotes).GetProperties())
                 {
                     string currencyCode = propertyInfo.Name.Substring(3);
-                    string currencyName = this.GetCurrencyName(isoCurrencySymbol: currencyCode);
+                    string currencyName = currencyCode;
                     float exchangeRate = (float)currencyLayerResponse.Quotes.GetType().GetProperty(name: propertyInfo.Name).GetValue(obj: currencyLayerResponse.Quotes, index: null);
 
                     if (exchangeRate.Equals(0))
@@ -140,19 +140,6 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             }
 
             return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions.Distinct(new CurrencyConversionEqualityComparer()).ToList());
-        }
-
-        /// <summary>
-        /// Convert the Unix time stamp to a <see cref="DateTime"/>.
-        /// </summary>
-        /// <param name="unixTimeStamp">The unix time stamp.</param>
-        /// <returns>A <see cref="DateTime"/>.</returns>
-        private static DateTime UnixTimeStampToDateTime(float unixTimeStamp)
-        {
-            // Unix timestamp is seconds past epoch
-            DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, kind: DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddSeconds(value: unixTimeStamp).ToLocalTime();
-            return dtDateTime;
         }
 
         /// <summary>

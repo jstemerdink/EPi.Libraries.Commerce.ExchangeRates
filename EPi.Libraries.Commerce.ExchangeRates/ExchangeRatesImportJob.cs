@@ -81,7 +81,6 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <returns>A status message to be stored in the database log and visible from admin mode</returns>
         public override string Execute()
         {
-            // Call OnStatusChanged to periodically notify progress of job for manually started jobs
             this.OnStatusChanged(
                 string.Format(
                     provider: CultureInfo.InvariantCulture,
@@ -94,6 +93,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
             if (!messages.Any())
             {
+                this.OnStatusChanged($"Processing {this.currencyConversions.Count} exchange rates");
+
                 messages = this.CreateConversions();
             }
 
@@ -162,36 +163,25 @@ namespace EPi.Libraries.Commerce.ExchangeRates
 
                     if (existingRow != null)
                     {
-
-                        existingRow.BeginEdit();
-
-                        existingRow.AverageRate = rate;
-                        existingRow.EndOfDayRate = rate;
-                        existingRow.CurrencyRateDate = to.CurrencyRateDate;
-                        existingRow.ModifiedDate = DateTime.Now;
-
-                        existingRow.EndEdit();
-                        existingRow.AcceptChanges();
-
-                        this.log.Information($"[Exchange Rates : Job] Exchange rate updated for {to.Name} : {to.Factor}");
+                        rates.RemoveCurrencyRateRow(existingRow);
+                        
+                        this.log.Information($"[Exchange Rates : Job] Old exchange rate removed for {to.Name} : {to.Factor}");
                     }
-                    else
+
+                    if (fromRow.CurrencyId == toRow.CurrencyId)
                     {
-                        if (fromRow.CurrencyId == toRow.CurrencyId)
-                        {
-                            continue;
-                        }
-
-                        rates.AddCurrencyRateRow(
-                            AverageRate: rate,
-                            EndOfDayRate: rate,
-                            ModifiedDate: DateTime.Now,
-                            parentCurrencyRowByFK_CurrencyRate_Currency: fromRow,
-                            parentCurrencyRowByFK_CurrencyRate_Currency1: toRow,
-                            CurrencyRateDate: to.CurrencyRateDate);
-
-                        this.log.Information($"[Exchange Rates : Job] Exchange rate added for {to.Name} : {to.Factor}");
+                        continue;
                     }
+
+                    rates.AddCurrencyRateRow(
+                        AverageRate: rate,
+                        EndOfDayRate: rate,
+                        ModifiedDate: DateTime.Now,
+                        parentCurrencyRowByFK_CurrencyRate_Currency: fromRow,
+                        parentCurrencyRowByFK_CurrencyRate_Currency1: toRow,
+                        CurrencyRateDate: to.CurrencyRateDate);
+
+                    this.log.Information($"[Exchange Rates : Job] Exchange rate added for {to.Name} : {to.Factor}");
                 }
                 catch (Exception exception)
                 {
@@ -201,7 +191,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                             format: "Error setting exchange rates row: {0}",
                             arg0: to.Name));
 
-                    this.log.Information($"[Exchange Rates : Job] Error setting exchange rates row for {to.Name}", exception);
+                    this.log.Error($"[Exchange Rates : Job] Error setting exchange rates row for {to.Name}", exception);
                 }
             }
 
