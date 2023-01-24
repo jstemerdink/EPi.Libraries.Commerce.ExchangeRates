@@ -128,7 +128,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                         continue;
                     }
 
-                    PropertyInfo property = ratesType?.GetProperty(name: currencyCode);
+                    PropertyInfo property = ratesType?.GetProperty(name: propertyInfo.Name);
                     object propertyValue = property?.GetValue(obj: currencyLayerResponse.Quotes, index: null);
 
                     if (propertyValue == null)
