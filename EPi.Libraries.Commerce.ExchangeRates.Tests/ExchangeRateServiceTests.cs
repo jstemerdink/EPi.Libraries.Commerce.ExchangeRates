@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ExchangeRateServiceTests.cs" company="Jeroen Stemerdink">
-//      Copyright © 2019 Jeroen Stemerdink.
+//      Copyright © 2026 Jeroen Stemerdink.
 //      Permission is hereby granted, free of charge, to any person obtaining a copy
 //      of this software and associated documentation files (the "Software"), to deal
 //      in the Software without restriction, including without limitation the rights
@@ -23,18 +23,15 @@
 
 namespace EPi.Libraries.Commerce.ExchangeRates.Tests
 {
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-
     using FluentAssertions;
-
     using Mediachase.Commerce;
     using Mediachase.Commerce.Markets;
-
     using Microsoft.Extensions.Configuration;
-
+    using Microsoft.Extensions.Logging;
     using Moq;
     using NUnit.Framework;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
 
     [TestFixture]
     public class ExchangeRateServiceTests
@@ -43,6 +40,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
 
         private Mock<IMarketService> marketServiceMock;
         private Mock<IMarket> marketMock;
+        private Mock<ILogger<Fixer.ExchangeRateService>> fixerLoggerMock;
+        private Mock<ILogger<CurrencyLayer.ExchangeRateService>> currencyLayerLoggerMock;
 
         private IConfiguration configuration;
 
@@ -51,10 +50,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
         {
             // Arrange
             IExchangeRateService unitUnderTest = this.CreateCurrencyLayerService();
-            List<string> messages;
 
             // Act
-            ReadOnlyCollection<CurrencyConversion> result = unitUnderTest.GetExchangeRates(messages: out messages);
+            ReadOnlyCollection<CurrencyConversion> result = unitUnderTest.GetExchangeRates(messages: out var messages);
 
             messages.Count.Should().Be(0, "there should be no errors");
 
@@ -83,11 +81,15 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
 
             this.marketServiceMock = this.mockRepository.Create<IMarketService>();
             this.marketMock = this.mockRepository.Create<IMarket>();
-            this.marketMock.Setup(x => x.Currencies).Returns(() => new[] { new Currency("USD"), new Currency("SEK"), new Currency("EUR") });
+            this.marketMock.Setup(x => x.Currencies).Returns(() => [new Currency("USD"), new Currency("SEK"), new Currency("EUR")
+            ]);
 
             this.marketServiceMock.Setup(x => x.GetAllMarkets()).Returns(new List<IMarket>() { this.marketMock.Object });
 
             this.configuration = InitConfiguration();
+
+            currencyLayerLoggerMock = new Mock<ILogger<CurrencyLayer.ExchangeRateService>>();
+            fixerLoggerMock = new Mock<ILogger<Fixer.ExchangeRateService>>();
         }
 
         [TearDown]
@@ -108,12 +110,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Tests
 
         private IExchangeRateService CreateCurrencyLayerService()
         {
-            return new CurrencyLayer.ExchangeRateService(this.marketServiceMock.Object, this.configuration);
+            return new CurrencyLayer.ExchangeRateService(this.marketServiceMock.Object, this.configuration, currencyLayerLoggerMock.Object);
         }
 
         private IExchangeRateService CreateFixerService()
         {
-            return new Fixer.ExchangeRateService(this.marketServiceMock.Object, this.configuration);
+            return new Fixer.ExchangeRateService(this.marketServiceMock.Object, this.configuration, fixerLoggerMock.Object);
         }
     }
 }

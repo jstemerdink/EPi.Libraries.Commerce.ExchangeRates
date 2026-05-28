@@ -11,6 +11,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <DocumentationFile>bin\Release\EPi.Libraries.Commerce.ExchangeRates.XML</DocumentationFile>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
   </PropertyGroup>
@@ -21,7 +22,7 @@
     <AssemblyOriginatorKeyFile>EPiServer.Libraries.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <NoWin32Manifest>true</NoWin32Manifest>
@@ -73,21 +74,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EPiServer.Commerce" Version="14.6.0" />
+    <PackageReference Include="EPiServer.Commerce" Version="15.0.0" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-		<None Update="EPi.Libraries.Commerce.ExchangeRates.targets">
-			<Pack>True</Pack>
-			<PackagePath>build\net6.0\</PackagePath>
-		</None>
-	</ItemGroup>
-	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-		<None Update="EPi.Libraries.Commerce.ExchangeRates.targets">
-			<Pack>True</Pack>
-			<PackagePath>build\net7.0\</PackagePath>
-		</None>
-	</ItemGroup>
 </Project>

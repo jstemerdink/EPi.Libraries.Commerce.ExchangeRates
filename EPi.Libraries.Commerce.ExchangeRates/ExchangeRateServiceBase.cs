@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ExchangeRateServiceBase.cs" company="Jeroen Stemerdink">
-//      Copyright © 2019 Jeroen Stemerdink.
+//      Copyright © 2026 Jeroen Stemerdink.
 //      Permission is hereby granted, free of charge, to any person obtaining a copy
 //      of this software and associated documentation files (the "Software"), to deal
 //      in the Software without restriction, including without limitation the rights
@@ -26,16 +26,14 @@ namespace EPi.Libraries.Commerce.ExchangeRates
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Globalization;
     using System.Linq;
     using System.Net.Http;
-
-    using EPiServer.Logging;
 
     using Mediachase.Commerce;
     using Mediachase.Commerce.Markets;
 
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
 
     /// <summary>
     ///     Class ExchangeRateServiceBase.
@@ -56,7 +54,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// <summary>
         ///     The <see cref="ILogger"/> instance.
         /// </summary>
-        protected ILogger Log = LogManager.GetLogger();
+        protected ILogger Logger;
         
         /// <summary>
         /// The configuration
@@ -68,10 +66,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// </summary>
         /// <param name="marketService">The market service.</param>
         /// <param name="configuration">The configuration.</param>
-        protected ExchangeRateServiceBase(IMarketService marketService, IConfiguration configuration)
+        /// <param name="logger">The logger</param>
+        protected ExchangeRateServiceBase(IMarketService marketService, IConfiguration configuration, ILogger logger)
         {
             this.MarketService = marketService;
             this.Configuration = configuration;
+            this.Logger = logger;
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
             }
             catch (Exception exception)
             {
-                this.Log.Debug("[Exchange Rates : Service] Error getting timestamp", exception);
+                this.Logger.LogDebug(exception, "[Exchange Rates : Service] Error getting timestamp");
             }
 
             return DateTime.Now.ToLocalTime();
