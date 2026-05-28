@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ExchangeRatesImportJob.cs" company="Jeroen Stemerdink">
-//      Copyright © 2019 Jeroen Stemerdink.
+//      Copyright © 2026 Jeroen Stemerdink.
 //      Permission is hereby granted, free of charge, to any person obtaining a copy
 //      of this software and associated documentation files (the "Software"), to deal
 //      in the Software without restriction, including without limitation the rights
@@ -23,31 +23,28 @@
 
 namespace EPi.Libraries.Commerce.ExchangeRates
 {
+    using EPiServer.Scheduler;
+    using EPiServer.ServiceLocation;
+    using Mediachase.Commerce.Catalog.Dto;
+    using Mediachase.Commerce.Catalog.Managers;
+    using Microsoft.Extensions.Logging;
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Globalization;
     using System.Linq;
-
-    using EPiServer.Logging;
-    using EPiServer.PlugIn;
-    using EPiServer.Scheduler;
-    using EPiServer.ServiceLocation;
-
-    using Mediachase.Commerce.Catalog.Dto;
-    using Mediachase.Commerce.Catalog.Managers;
     
     /// <summary>
     ///     Class ExchangeRatesImportJob.
     /// </summary>
-    [ScheduledPlugIn(DisplayName = "Exchange Rates Import", DefaultEnabled = true, Restartable = false)]
+    [ScheduledJob(DisplayName = "Exchange Rates Import", DefaultEnabled = true, Restartable = false)]
     [ServiceConfiguration]
     public class ExchangeRatesImportJob : ScheduledJobBase
     {
         /// <summary>
-        /// The log
+        /// The logger
         /// </summary>
-        private readonly ILogger log = LogManager.GetLogger(typeof(ExchangeRatesImportJob));
+        private readonly ILogger<ExchangeRatesImportJob> logger;
 
         /// <summary>
         ///     Gets or sets the exchange rate service.
@@ -69,9 +66,11 @@ namespace EPi.Libraries.Commerce.ExchangeRates
         /// Initializes a new instance of the <see cref="ExchangeRatesImportJob" /> class.
         /// </summary>
         /// <param name="exchangeRateService">The exchange rate service.</param>
-        public ExchangeRatesImportJob(IExchangeRateService exchangeRateService)
+        /// <param name="logger"></param>
+        public ExchangeRatesImportJob(IExchangeRateService exchangeRateService, ILogger<ExchangeRatesImportJob> logger)
         {
             this.exchangeRateService = exchangeRateService;
+            this.logger = logger;
             this.IsStoppable = true;
         }
 
@@ -170,7 +169,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     {
                         rates.RemoveCurrencyRateRow(existingRow);
                         
-                        this.log.Information($"[Exchange Rates : Job] Old exchange rate removed for {to.Name} : {to.Factor}");
+                        this.logger.LogInformation("[Exchange Rates : Job] Old exchange rate removed for {Name} : {Factor}", to.Name, to.Factor);
                     }
 
                     rates.AddCurrencyRateRow(
@@ -181,7 +180,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                         parentCurrencyRowByFK_CurrencyRate_Currency1: toRow,
                         CurrencyRateDate: to.CurrencyRateDate);
 
-                    this.log.Information($"[Exchange Rates : Job] Exchange rate added for {to.Name} : {to.Factor}");
+                    this.logger.LogInformation("[Exchange Rates : Job] Exchange rate added for {Name} : {Factor}", to.Name, to.Factor);
                 }
                 catch (Exception exception)
                 {
@@ -191,7 +190,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                             format: "Error setting exchange rates row: {0}",
                             arg0: to.Name));
 
-                    this.log.Error($"[Exchange Rates : Job] Error setting exchange rates row for {to.Name}", exception);
+                    this.logger.LogError(exception, "[Exchange Rates : Job] Error setting exchange rates row for {Name}", to.Name);
                 }
             }
 
