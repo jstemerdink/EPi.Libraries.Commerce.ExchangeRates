@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ExchangeRateService.cs" company="Jeroen Stemerdink">
-//      Copyright © 2019 Jeroen Stemerdink.
+//      Copyright © 2026 Jeroen Stemerdink.
 //      Permission is hereby granted, free of charge, to any person obtaining a copy
 //      of this software and associated documentation files (the "Software"), to deal
 //      in the Software without restriction, including without limitation the rights
@@ -28,25 +28,20 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
     using System.Collections.ObjectModel;
     using System.Configuration;
     using System.Globalization;
-    using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Reflection;
     using System.Text;
 
-    using EPiServer.Logging;
     using EPiServer.ServiceLocation;
 
     using Mediachase.Commerce.Markets;
 
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
 
     using Newtonsoft.Json;
-    using static System.Net.Mime.MediaTypeNames;
-
-    using ConfigurationManager = System.Configuration.ConfigurationManager;
 
     /// <summary>
     ///     Class ExchangeRateService.
@@ -67,8 +62,9 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
         /// </summary>
         /// <param name="marketService">The market service.</param>
         /// <param name="configuration">The configuration.</param>
-        public ExchangeRateService(IMarketService marketService, IConfiguration configuration)
-            : base(marketService: marketService, configuration)
+        /// <param name="logger">The logger.</param>
+        public ExchangeRateService(IMarketService marketService, IConfiguration configuration, ILogger<ExchangeRateService> logger)
+            : base(marketService: marketService, configuration, logger)
         {
         }
 
@@ -98,7 +94,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             catch (Exception exception)
             {
                 messages.Add(item: FailMessage);
-                this.Log.Error(message: FailMessage, exception: exception);
+                this.Logger.LogError(message: FailMessage, exception: exception);
                 return new ReadOnlyCollection<CurrencyConversion>(list: currencyConversions);
             }
 
@@ -143,7 +139,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                 }
                 catch (Exception exception)
                 {
-                    this.Log.Error(message: ConvertMessage, exception: exception);
+                    this.Logger.LogError(message: ConvertMessage, exception: exception);
                 }
             }
 
@@ -197,7 +193,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 
                 if (string.IsNullOrWhiteSpace(responseBody))
                 {
-                    this.Log.Error(message: FailMessage);
+                    this.Logger.LogError(message: FailMessage);
                     return JsonConvert.DeserializeObject<FixerResponse>(value: jsonResponse);
                 }
 
@@ -205,8 +201,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             }
             catch (Exception exception)
             {
-                this.Log.Error(message: FailMessage, exception: exception);
-                this.Log.Debug("[Exchange Rates : Fixer] JSON response: {0}", jsonResponse);
+                this.Logger.LogError(message: FailMessage, exception: exception);
+                this.Logger.LogDebug("[Exchange Rates : Fixer] JSON response: {JsonResponse}", jsonResponse);
             }
 
             return JsonConvert.DeserializeObject<FixerResponse>(value: jsonResponse);
