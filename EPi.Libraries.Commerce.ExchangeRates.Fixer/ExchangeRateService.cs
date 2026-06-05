@@ -21,6 +21,8 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+using System.IO;
+
 namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 {
     using System;
@@ -81,6 +83,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
 
             FixerResponse fixerResponse = this.GetFixerResponse();
             DateTime exchangeRateDate = UnixTimeStampToDateTime(unixTimeStamp: fixerResponse.Timestamp);
+            var usCulture = CultureInfo.CreateSpecificCulture("en-US");
 
             try
             {
@@ -132,7 +135,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
                     CurrencyConversion currencyConversion = new CurrencyConversion(
                         currency: currencyCode,
                         name: currencyName,
-                        factor: Convert.ToDecimal(value: exchangeRate, provider: CultureInfo.CreateSpecificCulture("en-US")),
+                        factor: Convert.ToDecimal(value: exchangeRate, provider: usCulture),
                         updated: exchangeRateDate);
 
                     currencyConversions.Add(item: currencyConversion);
@@ -181,15 +184,14 @@ namespace EPi.Libraries.Commerce.ExchangeRates.Fixer
             {
                 string requestUrl = $"{apiUrl}latest?access_key={accessKey}&symbols={string.Join(",", this.GetAvailableCurrencies())}";
 
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                request.Content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = Client.SendAsync(request).Result;
-
+                using HttpResponseMessage response = Client.Send(request);
                 response.EnsureSuccessStatusCode();
 
-                string responseBody = response.Content.ReadAsStringAsync().Result;
+                using StreamReader reader = new StreamReader(response.Content.ReadAsStream());
+                string responseBody = reader.ReadToEnd();
 
                 if (string.IsNullOrWhiteSpace(responseBody))
                 {
