@@ -2,8 +2,8 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/d5ruha0q93g536ud?svg=true)](https://ci.appveyor.com/project/jstemerdink/epi-libraries-commerce-exchangerates)
 [![GitHub version](https://badge.fury.io/gh/jstemerdink%2FEPi.Libraries.Commerce.ExchangeRates.svg)](http://badge.fury.io/gh/jstemerdink%2FEPi.Libraries.Commerce.ExchangeRates)
-[![Platform](https://img.shields.io/badge/platform-.NET%206-blue.svg?style=flat)](https://msdn.microsoft.com/en-us/library/w0x726c2%28v=vs.110%29.aspx)
-[![Platform](https://img.shields.io/badge/EPiServer%20Commerce-%2014.6.0-orange.svg?style=flat)](http://world.episerver.com/commerce/)
+[![Platform](https://img.shields.io/badge/platform-.NET%2010-blue.svg?style=flat)](https://msdn.microsoft.com/en-us/library/w0x726c2%28v=vs.110%29.aspx)
+[![Platform](https://img.shields.io/badge/EPiServer%20Commerce-%2015-orange.svg?style=flat)](http://world.episerver.com/commerce/)
 [![GitHub license](https://img.shields.io/github/license/jstemerdink/EPi.Libraries.Commerce.ExchangeRates.svg)](LICENSE)  
 
 
@@ -15,6 +15,3 @@ By Jeroen Stemerdink
 
 ## About
 Tests for the two currency services.
-
-> *Powered by ReSharper*
-> [![image](https://i0.wp.com/jstemerdink.files.wordpress.com/2017/08/logo_resharper.png)](http://jetbrains.com)

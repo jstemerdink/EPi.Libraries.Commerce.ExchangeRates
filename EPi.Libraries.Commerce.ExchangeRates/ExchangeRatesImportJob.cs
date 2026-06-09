@@ -86,19 +86,25 @@ namespace EPi.Libraries.Commerce.ExchangeRates
                     format: "Starting execution of {0}",
                     arg0: this.GetType()));
 
-            List<string> messages;
-
-            this.currencyConversions = this.exchangeRateService.GetExchangeRates(messages: out messages);
-
-            if (!messages.Any())
+            try
             {
-                this.OnStatusChanged($"Processing {this.currencyConversions.Count} exchange rates");
+                this.currencyConversions = this.exchangeRateService.GetExchangeRates(messages: out var messages);
 
-                messages = this.CreateConversions();
+                if (!messages.Any())
+                {
+                    this.OnStatusChanged($"Processing {this.currencyConversions.Count} exchange rates");
+
+                    messages = this.CreateConversions();
+                }
+
+                string returnMessage = messages.Any() ? string.Join("<br/>", values: messages) : "Exchange rates updated";
+                return this.stopSignaled ? "Stop of job was called" : returnMessage;
             }
-
-            string returnMessage = messages.Any() ? string.Join("<br/>", values: messages) : "Exchange rates updated";
-            return this.stopSignaled ? "Stop of job was called" : returnMessage;
+            finally
+            {
+                // Do not pin the collection on the long-lived (singleton) job instance.
+                this.currencyConversions = null;
+            }
         }
 
         /// <summary>

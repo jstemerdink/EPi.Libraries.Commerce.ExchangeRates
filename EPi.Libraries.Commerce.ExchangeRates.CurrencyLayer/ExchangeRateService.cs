@@ -21,6 +21,8 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+using System.IO;
+
 namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 {
     using System;
@@ -78,6 +80,8 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
 
             CurrencyLayerResponse currencyLayerResponse = this.GetCurrencyLayerResponse();
             DateTime exchangeRateDate = UnixTimeStampToDateTime(unixTimeStamp: currencyLayerResponse.Timestamp);
+
+            var usCulture = CultureInfo.CreateSpecificCulture("en-US");
 
             try
             {
@@ -145,7 +149,7 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
                     CurrencyConversion currencyConversion = new CurrencyConversion(
                         currency: currencyCode,
                         name: currencyName,
-                        factor: Convert.ToDecimal(value: exchangeRate, provider: CultureInfo.CreateSpecificCulture("en-US")),
+                        factor: Convert.ToDecimal(value: exchangeRate, provider: usCulture),
                         updated: exchangeRateDate);
 
                     currencyConversions.Add(item: currencyConversion);
@@ -194,10 +198,12 @@ namespace EPi.Libraries.Commerce.ExchangeRates.CurrencyLayer
             {
                 string requestUrl = $"{apiUrl}live?access_key={accessKey}&currencies={string.Join(",", this.GetAvailableCurrencies())}";
 
-                HttpResponseMessage response = Client.GetAsync(requestUrl).Result;
+                using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                using HttpResponseMessage response = Client.Send(request);
                 response.EnsureSuccessStatusCode();
 
-                string responseBody = response.Content.ReadAsStringAsync().Result;
+                using StreamReader reader = new StreamReader(response.Content.ReadAsStream());
+                string responseBody = reader.ReadToEnd();
 
                 if (string.IsNullOrWhiteSpace(responseBody))
                 {
